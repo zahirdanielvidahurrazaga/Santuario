@@ -320,14 +320,70 @@ function DashboardSidebar({ setView, mode, activeRole, location }) { /* Omitido 
 }
 
 function DashboardAtleta({ setView, mode, location }) {
+  const [selectedCoach, setSelectedCoach] = useState(null);
+
+  const coaches = [
+    { id: 1, name: 'HÉCTOR VEGA', block: 'MATUTINO', hours: '6:00 AM - 10:00 AM', spec: 'HIIT & Fuerza Estructural', bio: 'Comando especialista en levantamientos pesados y resistencia anaeróbica. Su objetivo es llevarte al fallo muscular.' },
+    { id: 2, name: 'SOFÍA REYES', block: 'MEDIO DÍA', hours: '12:00 PM - 2:00 PM', spec: 'Calistenia Funcional', bio: 'Dominio absoluto del peso corporal. Enfocada en técnica pura, equilibrio y movilidad articular avanzada.' },
+    { id: 3, name: 'CARLOS T.', block: 'VESPERTINO', hours: '5:00 PM - 9:00 PM', spec: 'HYROX & Conditioning', bio: 'Resistencia cardiovascular brutal. Su metodología cruza el umbral del dolor para el máximo desempeño.' }
+  ];
+
   return (
     <div className="dashboard-layout fade-in">
       <DashboardSidebar setView={setView} mode={mode} activeRole="Atleta" location={location} />
       <div className="main-content">
-        <h2 className="fade-in delay-1" style={{ fontSize: '3rem', marginBottom: '3rem' }}>PANEL DE OPERACIONES</h2>
-        <div className="dashboard-card fade-in delay-3">
-          <h3>MASTER PROGRAM: W.O.D.</h3>
-          <div className="pizarron-wod"><div className="pizarron-fod">A) WARM UP{'\n'}3 Rounds de acondicionamiento Base...</div></div>
+        <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', marginBottom: '2rem', textShadow: '0 0 20px var(--glow-color)' }}>
+          PERFIL DE ATLETA
+        </h2>
+        
+        {/* Roster de Coaches y Horarios */}
+        <div className="dashboard-card fade-in delay-2" style={{ padding: '2rem', margin: '0 0 2rem 0' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>ROSTER DE OPERACIÓN TÁCTICA</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {coaches.map((coach) => (
+              <div 
+                key={coach.id}
+                className="coach-card" 
+                onClick={() => setSelectedCoach(coach)}
+              >
+                <div style={{color: 'var(--border-glow)', fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>{coach.block} ({coach.hours})</div>
+                <div style={{fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '0.5rem'}}>{coach.name}</div>
+                <div style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>{coach.spec}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Ficha Táctica Modal Interno */}
+          {selectedCoach && (
+            <div className="fade-in" style={{ marginTop: '2rem', padding: '2rem', background: '#000', border: '1px solid var(--border-glow)', position: 'relative', boxShadow: '0 0 30px var(--glow-color)' }}>
+              <button 
+                onClick={() => setSelectedCoach(null)} 
+                style={{position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}
+              >✕</button>
+              <h4 style={{fontSize: '1.5rem', color: 'white', textTransform: 'uppercase', marginBottom: '0.5rem'}}>{selectedCoach.name}</h4>
+              <p style={{color: 'var(--border-glow)', fontWeight: 'bold', marginBottom: '1rem', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase'}}>{selectedCoach.spec}</p>
+              <p style={{color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.9rem'}}>{selectedCoach.bio}</p>
+            </div>
+          )}
+        </div>
+
+        {/* WOD Terminal */}
+        <div className="dashboard-card fade-in delay-3" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>MASTER PROGRAM: W.O.D. (HOY)</h3>
+          <div className="pizarron-wod">
+            <div className="pizarron-fod">
+              <span style={{color: '#00bbff'}}>A) WARM UP (10 MIN)</span>{'\n'}
+              - 3 Rounds Acondicionamiento Base{'\n'}
+              - 15x Push-ups{'\n'}
+              - 20x Air Squats{'\n\n'}
+              <span style={{color: 'var(--border-glow)'}}>B) MAIN PROTOCOL: THE GRIND</span>{'\n'}
+              - EMOM 15 Minutos:{'\n'}
+              - Min 1: 15 Pull-ups Mecánicos{'\n'}
+              - Min 2: 20 Wall Balls{'\n'}
+              - Min 3: Max Calorie Row
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -339,11 +395,27 @@ function DashboardCoach({ setView, mode, location }) {
     <div className="dashboard-layout fade-in">
       <DashboardSidebar setView={setView} mode={mode} activeRole="Coach" location={location} />
       <div className="main-content">
-        <h2 className="fade-in delay-1" style={{ fontSize: '3rem', marginBottom: '3rem' }}>TERMINAL DEL COACH</h2>
-        <div className="dashboard-card fade-in delay-2">
-          <h3>INYECCIÓN DE PROTOCOLO (WOD)</h3>
-           <textarea className="input-field" rows="12" placeholder="Escribe la rutina para enviar a atletas..."></textarea>
-          <button className="btn" style={{ fontSize: '1.2rem', padding: '1.5rem 3rem', marginTop: '1rem' }}>COMPILAR Y PUBLICAR AL FRONT</button>
+        <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', marginBottom: '2rem', textShadow: '0 0 20px var(--glow-color)' }}>
+          PANEL DE TRANSMISIÓN
+        </h2>
+        
+        <div className="dashboard-card fade-in delay-2" style={{ padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', margin: 0 }}>INYECCIÓN DE PROTOCOLO (W.O.D.)</h3>
+            <div className="status-badge" style={{ borderColor: 'var(--text-muted)', color: 'var(--text-muted)', boxShadow: 'none' }}>NO PUBLICADO</div>
+          </div>
+          <p style={{fontSize:'0.8rem', color: 'var(--text-muted)', marginBottom: '1rem'}}>
+            El protocolo que escribas aquí se sincronizará inmediatamente en las pantallas de todos los atletas de la sede {location.toUpperCase()}.
+          </p>
+          <textarea 
+            className="input-field" 
+            rows="10" 
+            placeholder="A) WARM UP...&#10;B) STRENGTH...&#10;C) WOD..."
+            style={{ fontFamily: 'Courier New', resize: 'vertical' }}
+          ></textarea>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+            <button className="btn" style={{ fontSize: '1rem', padding: '1.2rem 2rem' }}>PUBLICAR W.O.D. A TODOS</button>
+          </div>
         </div>
       </div>
     </div>
@@ -355,10 +427,90 @@ function DashboardAdmin({ setView, mode, location }) {
     <div className="dashboard-layout fade-in">
       <DashboardSidebar setView={setView} mode={mode} activeRole="Administrador" location={location} />
       <div className="main-content">
-        <h2 className="fade-in delay-1" style={{ fontSize: '3rem', marginBottom: '3rem' }}>VISIÓN TÁCTICA FINANCIERA ({location.toUpperCase()})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', margin: 0, textShadow: '0 0 20px var(--glow-color)' }}>
+            CENTRO DE COMANDO <span style={{color: 'var(--border-glow)'}}>({location.toUpperCase()})</span>
+          </h2>
+          <div className="status-badge fade-in delay-2" style={{ animation: 'pulse 2s infinite' }}>● EN LÍNEA</div>
+        </div>
+        
+        {/* Métricas Principales */}
         <div className="admin-metrics-grid fade-in delay-2">
-          <div className="dashboard-card" style={{ marginBottom: 0 }}><h3>FLUJO HOY</h3><div className="metric-value">$8,450.00</div></div>
-          <div className="dashboard-card" style={{ marginBottom: 0 }}><h3>NUEVOS MIEBROS</h3><div className="metric-value">4 <span style={{fontSize:'1.5rem',color:'var(--text-muted)'}}>LEADS</span></div></div>
+          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>FLUJO NETO (HOY)</h3>
+            <div className="metric-value metric-primary">$12,450<span style={{fontSize:'1.5rem', color: 'var(--text-muted)'}}>.00</span></div>
+            <div style={{color: '#00bbff', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>▲ +14% VIS A VIS AYER</div>
+          </div>
+          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>MRR STRIPE (MENSUAL)</h3>
+            <div className="metric-value">$142k</div>
+            <div style={{color: '#00bbff', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>▲ DOMICILIACIÓN ACTIVA</div>
+          </div>
+          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>MIEMBROS ACTIVOS</h3>
+            <div className="metric-value">312 <span style={{fontSize:'1.5rem',color:'var(--text-muted)'}}>PX</span></div>
+            <div style={{color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>CHURN RISK: BAJO (2%)</div>
+          </div>
+        </div>
+
+        {/* Capacidad y Gráfico Crítico */}
+        <div className="dashboard-card fade-in delay-3" style={{ padding: '2rem', marginTop: '2rem' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>CAPACIDAD OPERATIVA DE INSTALACIÓN</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{fontWeight: '900', fontSize: '1.2rem', color: 'var(--text-main)'}}>82% OCUPACIÓN ACTUAL</span>
+            <span style={{color: 'var(--border-glow)', fontWeight: 'bold'}}>ZONA ÓPTIMA</span>
+          </div>
+          <div className="progress-bar-container">
+            <div className="progress-bar-fill" style={{width: '82%'}}></div>
+          </div>
+        </div>
+
+        {/* Feed de Operaciones en Vivo */}
+        <div className="dashboard-card fade-in delay-4" style={{ padding: '2rem', margin: '2rem 0' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>REGISTRO TÁCTICO (LIVE TERMINAL)</h3>
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Operativo (Atleta)</th>
+                  <th>Transacción</th>
+                  <th>Status</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Hace 2 min</td>
+                  <td>Sofía Méndez</td>
+                  <td>Pago Domiciliado (Stripe)</td>
+                  <td style={{color: '#00bbff'}}>Completado</td>
+                  <td>$1,000.00</td>
+                </tr>
+                <tr>
+                  <td>Hace 15 min</td>
+                  <td>Carlos R.</td>
+                  <td>Check-In QR (Recepción)</td>
+                  <td style={{color: '#00bbff'}}>Ingreso</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Hace 42 min</td>
+                  <td>Héctor Vargas</td>
+                  <td>Suscripción (Efectivo)</td>
+                  <td style={{color: '#00bbff'}}>Completado</td>
+                  <td>$800.00</td>
+                </tr>
+                <tr style={{ opacity: 0.6 }}>
+                  <td>Hace 1 hr</td>
+                  <td>Diego C.</td>
+                  <td>Cobro Fallido (Fondos insuficientes)</td>
+                  <td style={{color: 'var(--primary)'}}>Denegado</td>
+                  <td>$1,000.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

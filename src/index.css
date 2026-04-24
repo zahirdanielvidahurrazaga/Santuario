@@ -273,3 +273,27 @@ select.input-field { appearance: none; color: white; cursor: pointer; }
 
 .metric-value { font-size: 4rem; font-family: 'Teko', sans-serif; font-weight: 700; color: var(--text-main); line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
 .metric-primary { color: var(--border-glow); text-shadow: 0 0 30px var(--glow-color); }
+
+/* Progress Bars && Tactial Dashboard Tools */
+.progress-bar-container { width: 100%; height: 8px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 4px; overflow: hidden; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+.progress-bar-fill { height: 100%; background: var(--border-glow); box-shadow: 0 0 15px var(--glow-color); transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+@keyframes pulse {
+  0% { opacity: 1; text-shadow: 0 0 10px var(--border-glow); }
+  50% { opacity: 0.5; text-shadow: none; }
+  100% { opacity: 1; text-shadow: 0 0 10px var(--border-glow); }
+}
+
+.coach-card {
+  background: rgba(0,0,0,0.5); 
+  border: 1px solid var(--border-subtle); 
+  padding: 1.5rem; 
+  cursor: pointer; 
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.coach-card:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-glow);
+  box-shadow: 0 5px 20px var(--glow-color);
+  transform: translateY(-5px);
+}
