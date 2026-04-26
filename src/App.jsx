@@ -1,539 +1,395 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from './supabaseClient';
+import { QRCodeCanvas } from 'qrcode.react';
 import './index.css';
 
 // ============================================
-// COMPONENTE: SELECTOR PRINCIPAL (SPLASH UNIVERSAL)
+// STRIPE CHECKOUT MODAL (SIMULATION)
 // ============================================
-function SplashSelector({ setView, setMode, setLocation }) {
-  const [showPueblaMenu, setShowPueblaMenu] = useState(false);
+function StripeCheckout({ selectedPlan, onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
 
-  const selectCity = (city) => {
-    setLocation(city);
-    if (city === 'puebla') {
-      setShowPueblaMenu(true);
-    } else {
-      setMode('classic');
-      setView('landing');
-    }
-  };
-
-  const selectExperience = (exp) => {
-    setMode(exp);
-    setView('landing');
+  const handlePayment = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setStep(2);
+      setTimeout(() => { onSuccess(); }, 1500);
+    }, 2000);
   };
 
   return (
-    <div className="splash-container">
-      {/* PANEL PUEBLA */}
-      <div 
-        className="splash-pane" 
-        style={{ background: '#050505' }}
-        onClick={() => !showPueblaMenu && selectCity('puebla')}
-      >
-        <img src="/hero_bg_red.png" className="splash-bg" alt="Puebla HQ" />
-        <div className="splash-content fade-in">
-          <div className="logo-massive">PUEBLA</div>
-          <div className="logo-sub">CIUDAD MATRIZ</div>
-          
-          {showPueblaMenu ? (
-            <div className="experience-overlay">
-              <button className="btn" style={{ width: '100%', fontSize:'0.9rem' }} onClick={(e) => { e.stopPropagation(); selectExperience('classic'); }}>
-                ENTRAR A CLASSIC
-              </button>
-              <button className="btn btn-secondary" style={{ width: '100%', fontSize:'0.9rem', borderColor:'white' }} onClick={(e) => { e.stopPropagation(); selectExperience('elite'); }}>
-                ENTRAR A ELITE
-              </button>
+    <div className="stripe-modal-overlay">
+      <div className="stripe-modal">
+        {step === 1 ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+              <span className="overline" style={{margin: 0}}>Checkout Seguro</span>
+              <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: '2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
             </div>
-          ) : (
-            <div style={{marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em'}}>CLICK PARA EXPLORAR</div>
-          )}
-        </div>
-      </div>
-      
-      {/* PANEL CANCUN */}
-      <div 
-        className="splash-pane"
-        style={{ background: '#0a0a0a' }}
-        onClick={() => selectCity('cancun')}
-      >
-        <img src="/hero_bg_red.png" className="splash-bg" alt="Cancun MOD" />
-        <div className="splash-content fade-in delay-1">
-          <div className="logo-massive" style={{color: 'white'}}>CANCÚN</div>
-          <div className="logo-sub" style={{color: '#c51a1b'}}>MOD FORMAT</div>
-          <div style={{marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em'}}>FORMATO CLÁSICO MMA & HYROX</div>
-        </div>
-      </div>
+            
+            <div style={{ marginBottom: '3rem' }}>
+              <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{selectedPlan.title}</h2>
+              <p style={{ fontFamily: 'Montserrat', fontWeight: '200', fontSize: '1.5rem', color: 'var(--text-muted)' }}>{selectedPlan.price}</p>
+            </div>
 
-      {/* PANEL HERMOSILLO */}
-      <div 
-        className="splash-pane"
-        style={{ background: '#070707' }}
-        onClick={() => selectCity('hermosillo')}
-      >
-        <img src="/wellness_bg_red.png" className="splash-bg" alt="Hermosillo" />
-        <div className="splash-content fade-in delay-2">
-          <div className="logo-massive" style={{color: 'white'}}>HERMOSILLO</div>
-          <div className="logo-sub" style={{color: '#c51a1b'}}>SANTUARIO SONORA</div>
-          <div style={{marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em'}}>FORMATO CLÁSICO FUNCIONAL</div>
-        </div>
+            <form onSubmit={handlePayment}>
+              <input type="email" placeholder="Correo Electrónico" className="input-editorial" required />
+              <input type="text" placeholder="Número de Tarjeta" className="input-editorial" required />
+              <div style={{ display: 'flex', gap: '2rem' }}>
+                <input type="text" placeholder="MM/AA" className="input-editorial" required />
+                <input type="text" placeholder="CVC" className="input-editorial" required />
+              </div>
+              
+              <button type="submit" className="btn-luxury" style={{width: '100%', marginTop: '2rem'}} disabled={loading}>
+                {loading ? 'Validando con Stripe...' : 'Completar Inscripción'}
+              </button>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '1.5rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                Pagos encriptados de extremo a extremo.
+              </p>
+            </form>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <h2 style={{ fontSize: '3rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Aprobado.</h2>
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'Montserrat', fontWeight: '300' }}>Iniciando sesión en tu portal Elite...</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ============================================
-// COMPONENTE: LANDING PÚBLICA (UNIVERSAL)
+// MAIN EDITORIAL LANDING PAGE
 // ============================================
-function Landing({ setView, mode, location }) {
-  const isElite = mode === 'elite';
-  const [menuOpen, setMenuOpen] = useState(false);
+function Landing({ setView }) {
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
 
-  const scrollTo = (id) => {
-    setMenuOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Intersection Observer for Reveal Animations
   useEffect(() => {
-    if (isElite) document.body.classList.add('theme-elite');
-    else document.body.classList.remove('theme-elite');
-    return () => document.body.classList.remove('theme-elite');
-  }, [isElite]);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
 
-  const heroImage = isElite ? "/elite_bg.png" : "/hero_bg_red.png";
-  const heroHeader = isElite ? "LUXURY WELLNESS" : "BUILD YOUR";
-  const heroGradient = isElite ? "PRACTICE" : "OWN TEMPLE";
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
-  // Identificador visual de locación en topbar
-  const locationTitles = {
-    puebla: isElite ? 'ELITE PUEBLA' : 'CLASSIC PUEBLA',
-    cancun: 'MOD CANCÚN',
-    hermosillo: 'HERMOSILLO'
-  };
-  
+  const plans = [
+    { title: "Kids Elite", price: "$2,500 MXN", features: ["De 6 a 12 años", "4 clases a la semana", "Lunes a Jueves 17:00-18:00"], featured: false },
+    { title: "Clases Elite", price: "$3,800 MXN", features: ["6 clases a la semana", "Acceso a amenidades", "NO incluye Open Gym"], featured: false },
+    { title: "Full Access Elite", price: "$4,000 MXN", features: ["6 clases a la semana", "Open Gym sin límite", "Todas las amenidades Elite", "Ice Bath & Sauna"], featured: true },
+    { title: "Personalizado Lite", price: "$10,000 MXN", features: ["12 sesiones mensuales", "3 veces/semana (1:30hr)", "Todas las amenidades Elite"], featured: false },
+    { title: "Personalizado Elite", price: "$16,000 MXN", features: ["Entrenamiento 1 a 1", "Seguimiento milimétrico", "Todas las amenidades Elite"], featured: true },
+    { title: "Semana de Visitas", price: "$1,500 MXN", features: ["5 visitas", "Open Gym o Clases", "Ice Bath & Sauna"], featured: false },
+    { title: "Visita Básica", price: "$400 MXN", features: ["Sin amenidades", "Open Gym + 1 Clase"], featured: false },
+    { title: "Visita Full", price: "$800 MXN", features: ["Con amenidades", "Open Gym + 1 Clase", "Ice Bath & Sauna"], featured: false },
+  ];
+
   return (
     <>
-      <nav className="navbar fade-in">
-        <div className="wrapper nav-container">
-          <div className="nav-logo" onClick={() => scrollTo('hero')}>
-            {isElite ? <span style={{color: 'white'}}>ELITE</span> : "SANTUARIO"}
-            <span style={{fontSize: '1rem', color: '#c51a1b', marginLeft: '0.5rem'}}>{locationTitles[location]}</span>
-          </div>
-          
-          {/* Botón táctico móvil */}
-          <div className="mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? '✕ CERRAR' : '≡ MENÚ'}
-          </div>
-
-          <div className={`nav-links ${menuOpen ? 'active' : ''}`}>
-            <button className="btn btn-secondary mobile-btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.65rem', borderWidth: '1px' }} onClick={() => setView('splash')}>
-              ⟵ CAMBIAR CIUDAD
-            </button>
-            <a onClick={() => scrollTo('disciplinas')} className="nav-link">Sistemas</a>
-            <a onClick={() => scrollTo('wellness')} className="nav-link">{isElite ? 'Thermal Complex' : 'Facilidades'}</a>
-            <a onClick={() => scrollTo('promos')} className="nav-link">Precios</a>
-            <button className="btn mobile-btn-heavy" style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem' }} onClick={() => setView('login')}>PORTAL SANCTUM</button>
-          </div>
-        </div>
+      <nav className="navbar reveal active">
+        <div className="brand-logo">ELITE <span>BY SANTUARIO</span></div>
+        <button onClick={() => setView('login')} style={{background: 'transparent', border: 'none', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.7rem', cursor: 'pointer'}}>Portal Privado</button>
       </nav>
 
-      <header id="hero" className="hero">
-        <div className="hero-bg fade-in">
-          <img src={heroImage} alt="Santuario Facility" />
-        </div>
-        <div className="hero-overlay fade-in delay-1"></div>
-        <div className="wrapper">
-          <div className="hero-content">
-            <span className="label fade-in">{locationTitles[location]} DIVISION</span>
-            <h1 className="fade-in delay-1">{heroHeader}<br /><span className="primary-gradient">{heroGradient}</span></h1>
-            <p className="fade-in delay-2" style={{ fontSize: '1.25rem', marginBottom: '2.5rem', maxWidth: '600px' }}>
-              {isElite 
-                ? "Un santuario superior. Complejo con sauna, vapor, inmersión en hielo y entrenamiento especializado."
-                : `El dominio de tu cuerpo a través del movimiento de élite en ${location.toUpperCase()}. Únete a una comunidad forjada en disciplina.`}
+      <section className="hero-editorial">
+        <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=2000&auto=format&fit=crop" alt="Elite Gym Interior" className="hero-bg" />
+        <div className="hero-gradient"></div>
+        <span className="overline reveal active d-1">The Absolute Standard</span>
+        <h1 className="hero-title reveal active d-2">Build Your <br/><span style={{fontStyle: 'italic', color: 'var(--primary)'}}>Temple.</span></h1>
+        <button className="btn-luxury reveal active d-3" onClick={() => document.getElementById('discover').scrollIntoView({behavior: 'smooth'})} style={{marginTop: '2rem'}}>Descubrir</button>
+      </section>
+
+      <section id="discover" className="section-padding">
+        <div className="editorial-grid">
+          <div className="reveal">
+            <span className="overline">Filosofía</span>
+            <h2 style={{fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '2rem'}}>Acondicionamiento<br/>Metabólico.</h2>
+            <p style={{fontFamily: 'Montserrat', fontWeight: '300', fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: '1.8'}}>
+              No somos un gimnasio comercial. Somos una obra de arte funcional. Instalaciones de alto rendimiento diseñadas meticulosamente para forjar élites mediante fuerza estructural y recuperación térmica extrema.
             </p>
-            <div className="btn-group fade-in delay-3">
-              <button className="btn" onClick={() => scrollTo('promos')}>Inscribirme Hoy</button>
-              <button className="btn btn-secondary" onClick={() => scrollTo('disciplinas')}>Ver Sistema</button>
+          </div>
+          <img src="https://images.unsplash.com/photo-1579758629938-03607ccdbaba?q=80&w=1000&auto=format&fit=crop" alt="Training" className="editorial-image reveal d-1" />
+        </div>
+      </section>
+
+      <section className="section-padding" style={{background: '#040507'}}>
+        <div className="editorial-grid reverse">
+          <div className="reveal">
+            <span className="overline">Recuperación Extrema</span>
+            <h2 style={{fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '2rem'}}>Terapia de<br/>Contraste.</h2>
+            <div style={{marginBottom: '2rem'}}>
+              <h3 style={{fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '0.5rem', fontFamily: 'Montserrat'}}>Ice Bath</h3>
+              <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Disminuye dolor e inflamación. Activa el sistema nervioso central, incrementa el estado de alerta y acelera la tasa metabólica.</p>
+            </div>
+            <div>
+              <h3 style={{fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '0.5rem', fontFamily: 'Montserrat'}}>Sauna</h3>
+              <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Elimina toxinas, mejora la circulación sanguínea y cardiovascular, y alivia dolores articulares.</p>
             </div>
           </div>
+          <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1000&auto=format&fit=crop" alt="Recovery" className="editorial-image reveal d-1" />
         </div>
-      </header>
+      </section>
 
-      <section id="disciplinas" className="section-padding">
-        <div className="wrapper">
-          <span className="label fade-in">Pilares Oficiales de Sede</span>
-          <h2 className="fade-in delay-1">METODOLOGÍA {location.toUpperCase()}</h2>
-          <div className="disciplines-grid fade-in delay-2">
-            
-            {/* Lógica condicional de disciplinas por Franquicia Táctica */}
-            {location === 'cancun' ? (
-              <>
-                <div className="discipline-card"><div className="discipline-number">01</div><h3 className="discipline-title">MMA & K1</h3><p>Striking y derribos. Preparación para combate de la vida real con Coachs Pro.</p></div>
-                <div className="discipline-card"><div className="discipline-number">02</div><h3 className="discipline-title">Jiu Jitsu</h3><p>Arte suave. Sometimientos, control de piso y defensa personal élite.</p></div>
-                <div className="discipline-card"><div className="discipline-number">03</div><h3 className="discipline-title">HYROX / Calistenia</h3><p>Resistencia híbrida. Fuerza masiva y cardio sin precedentes.</p></div>
-              </>
-            ) : location === 'hermosillo' ? (
-              <>
-                <div className="discipline-card"><div className="discipline-number">01</div><h3 className="discipline-title">Calistenia</h3><p>Domina tu peso. Progresiones mecánicas directas al objetivo.</p></div>
-                <div className="discipline-card"><div className="discipline-number">02</div><h3 className="discipline-title">Funcional</h3><p>Acondicionamiento físico de altísima intensidad sin ataduras.</p></div>
-                <div className="discipline-card"><div className="discipline-number">03</div><h3 className="discipline-title">Open Gym</h3><p>Tu propio ritmo. Zona de alta destreza libre.</p></div>
-              </>
-            ) : isElite ? (
-              <>
-                <div className="discipline-card"><div className="discipline-number">01</div><h3 className="discipline-title">Calistenia Pura</h3><p>Progresiones mecánicas avanzadas.</p></div>
-                <div className="discipline-card"><div className="discipline-number">02</div><h3 className="discipline-title">Personalizados</h3><p>Clases 1 a 1 para atletas ('T').</p></div>
-                <div className="discipline-card"><div className="discipline-number">03</div><h3 className="discipline-title">Kids (Niños)</h3><p>Desarrollo psicomotriz para el futuro.</p></div>
-              </>
-            ) : (
-              <>
-                <div className="discipline-card"><div className="discipline-number">01</div><h3 className="discipline-title">Calistenia Fundamental</h3><p>Domina tu peso y desarrolla fuerza base infalible.</p></div>
-                <div className="discipline-card"><div className="discipline-number">02</div><h3 className="discipline-title">Body Cond.</h3><p>Acondicionamiento físico explosivo general.</p></div>
-                <div className="discipline-card"><div className="discipline-number">03</div><h3 className="discipline-title">Stretching</h3><p>Flexibilidad, prevención y core dinámico.</p></div>
-              </>
-            )}
-            
+      <section className="section-padding">
+        <div className="text-center reveal">
+          <span className="overline">The Routine</span>
+          <h2 style={{fontSize: '3rem'}}>Programación & Horarios.</h2>
+        </div>
+
+        <div className="schedule-container reveal d-1">
+          <div className="schedule-row">
+            <div className="schedule-title">Programación Semanal</div>
+            <div className="schedule-details">
+              <p>Lunes: <span>PULL</span></p>
+              <p>Martes: <span>PIERNA</span></p>
+              <p>Miércoles: <span>PUSH</span></p>
+              <p>Jueves: <span>PIERNA</span></p>
+              <p>Viernes: <span>PULL/PUSH</span></p>
+            </div>
+          </div>
+          <div className="schedule-row">
+            <div className="schedule-title">Clases Grupales</div>
+            <div className="schedule-details">
+              <p>LUN - VIE (AM): <span>6:00 - 7:30 | 7:30 - 9:00 | 9:00 - 10:30</span></p>
+              <p>LUN - VIE (PM): <span>16:30 - 18:00 | 18:00 - 19:30</span> <span style={{fontSize:'0.8rem', display:'block', color:'var(--primary)'}}>*Viernes no hay clases PM</span></p>
+              <p>SÁBADO: <span>8:00 - 9:30 (Grupal) | 8:30 - 9:30 (Elder)</span></p>
+            </div>
+          </div>
+          <div className="schedule-row">
+            <div className="schedule-title">Open Gym (Máquinas)</div>
+            <div className="schedule-details">
+              <p>LUN - VIE: <span>6:00 - 21:00</span></p>
+              <p>SÁBADO: <span>8:00 - 12:00</span></p>
+              <p>DOMINGO: <span>Cerrado</span></p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="wellness" className="wellness-section section-padding">
-        <div className="wellness-bg"><img src={isElite ? "/elite_bg.png" : "/wellness_bg_red.png"} alt="Wellness" /></div>
-        <div className="wrapper">
-          <div className="wellness-content fade-in">
-            <span className="label">{isElite ? 'Thermal Complex' : 'Facility Ops'}</span>
-            <h2>{isElite ? 'RECOVERY ELITE' : 'INFRAESTRUCTURA'}</h2>
-            <ul className="feature-list">
-              {isElite ? (
-                <><li className="feature-item"><span className="feature-check">+</span> Cold Plunge & Sauna</li><li className="feature-item"><span className="feature-check">+</span> Vapor & Nutrición Clínica</li></>
-              ) : (
-                <><li className="feature-item"><span className="feature-check">+</span> Zonas de Hidratación</li><li className="feature-item"><span className="feature-check">+</span> Regaderas y Lockers Seguros</li></>
-              )}
-            </ul>
-          </div>
+      <section className="section-padding" style={{background: '#040507'}}>
+        <div className="text-center reveal">
+          <span className="overline">Exclusividad</span>
+          <h2 style={{fontSize: '3rem'}}>Catálogo Oficial.</h2>
+        </div>
+
+        <div className="pricing-grid">
+          {plans.map((plan, i) => (
+            <div key={i} className={`price-card reveal ${plan.featured ? 'featured' : ''}`}>
+              <h3 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>{plan.title}</h3>
+              <p style={{fontFamily: 'Montserrat', fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: '300'}}>{plan.price}</p>
+              <ul>
+                {plan.features.map((f, j) => <li key={j}>{f}</li>)}
+              </ul>
+              <button className="btn-luxury" style={{width: '100%', marginTop: '2rem', padding: '1rem'}} onClick={() => setCheckoutPlan(plan)}>Inscribirme</button>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section id="promos" className="section-padding" style={{backgroundColor: 'var(--bg-base)'}}>
-        <div className="wrapper">
-          <div className="text-center fade-in"><h2>OFERTAS NACIONALES DEL MES</h2></div>
-          <div className="promos-banner fade-in delay-1">
-            <div className="promo-tier"><div className="promo-price">$800</div><p>Individual</p></div>
-            <div className="promo-tier"><div className="promo-price">$1,000</div><p>Paquete 2 PX</p></div>
-            <div className="promo-tier"><div className="promo-price">GRATIS</div><p>Paquete 3 PX Instalación Completa</p></div>
-          </div>
-        </div>
-      </section>
-
-      <footer id="contacto" className="footer fade-in">
-        <div className="wrapper">
-          <div className="footer-grid">
-            <div className="footer-col">
-              <div className="nav-logo" style={{ marginBottom: '1.5rem', display: 'block' }}>
-                SANTUARIO {location.toUpperCase()}
-              </div>
-              <p style={{ color: 'var(--text-muted)' }}>BUILD YOUR OWN TEMPLE.</p>
-            </div>
-
-            <div className="footer-col">
-              <h4>Ubicación GPS</h4>
-              {/* Direcciones Variables Dinámicas */}
-              {location === 'cancun' ? (
-                <>
-                  <p>Plaza Momoto</p>
-                  <p>Cancún, Quintana Roo</p>
-                  <p>Format: MOD / HYROX / MMA</p>
-                </>
-              ) : location === 'hermosillo' ? (
-                <>
-                  <p>Central de Entrenamientos</p>
-                  <p>Hermosillo, Sonora</p>
-                  <p>Build Your Own Temple N.W.</p>
-                </>
-              ) : isElite ? (
-                <>
-                  <p>Cúmulo de Virgo #28-1, Local ELITE</p>
-                  <p>Prolongación 11 Sur y Acuario</p>
-                  <p>Col. Concepción Las Lajas, Puebla.</p>
-                </>
-              ) : (
-                <>
-                  <p>Cúmulo de Virgo #28, Local 1</p>
-                  <p>Reserva Territorial Atlixcáyotl</p>
-                  <p>Puebla, Pue.</p>
-                </>
-              )}
-            </div>
-
-            <div className="footer-col">
-              <h4>Comunicaciones</h4>
-              <p>Membresías: Contactar en Recepción</p>
-              {location === 'cancun' ? (
-                <p>IG: @santuario.cancun | @md_cancun_</p>
-              ) : location === 'hermosillo' ? (
-                <p>IG: @santuariohermosillo</p>
-              ) : (
-                <p>IG: @santuariopuebla | @elite_by_santuario</p>
-              )}
-            </div>
-          </div>
-        </div>
+      <footer className="section-padding text-center" style={{paddingBottom: '4rem', borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+        <div className="brand-logo reveal">ELITE <span>BY SANTUARIO</span></div>
+        <p className="reveal d-1" style={{color: 'var(--text-muted)', fontFamily: 'Montserrat', fontWeight: '300', marginTop: '2rem'}}>
+          Avenida Casiopea #3804<br/>San Bernardino Tlaxcalancingo, Pue.
+        </p>
+        <p className="reveal d-2" style={{color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '4rem', textTransform: 'uppercase', letterSpacing: '0.1em'}}>
+          © 2026 Santuario Elite. Todos los derechos reservados.
+        </p>
       </footer>
+
+      {checkoutPlan && (
+        <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setCheckoutPlan(null); setView('setup-account'); }} />
+      )}
     </>
   );
 }
 
 // ============================================
-// COMPONENTE OMITIDOS/RESUMIDOS DE AUTH DASHBOARD 
-// (MISMO FUNCIONAMIENTO PREVIO SIN ALTERACIÓN DE LOGICA UI, ACORTADO PARA LIMPIEZA)
+// COMPLETE ACCOUNT SETUP (POST-PAYMENT)
 // ============================================
-function Login({ setView, mode }) { /* Mismo código ultra-premium previo... */
-  const [roleSelection, setRoleSelection] = useState('atleta');
-  useEffect(() => { if (mode === 'elite') document.body.classList.add('theme-elite'); else document.body.classList.remove('theme-elite'); }, [mode]);
-  const handleLogin = (e) => { e.preventDefault(); setView(`dashboard_${roleSelection}`); };
+function SetupAccount({ setView, setUser }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSetup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        }
+      }
+    });
+
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+    } else {
+      setUser(data.user);
+      alert("¡Cuenta configurada! Bienvenida a Santuario Elite.");
+      setView('dashboard');
+    }
+  };
+
   return (
-    <div className="auth-container">
-      <div className="auth-box fade-in delay-1">
-        <div style={{ marginBottom: '3rem', textAlign: 'center' }}><div className="nav-logo" style={{ display: 'block', fontSize: '3rem', textShadow: '0 0 20px var(--glow-color)' }}>{mode === 'elite' ? 'ELITE' : 'SANCTUM'}</div><div className="logo-sub">TACTICAL ACCESS</div></div>
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '2rem' }}><select className="input-field" value={roleSelection} onChange={(e) => setRoleSelection(e.target.value)}><option value="atleta">Nivel 1: Atleta (WOD)</option><option value="coach">Nivel 2: Coach (Upload)</option><option value="admin">Nivel 3: Administrador (Métricas)</option></select></div>
-          <div style={{ marginBottom: '1.5rem' }}><input type="email" placeholder="sys@santuario.com" className="input-field" required /></div>
-          <div style={{ marginBottom: '3rem' }}><input type="password" placeholder="••••••••" className="input-field" required /></div>
-          <div className="btn-group" style={{ flexDirection: 'column', gap: '1rem', marginTop: 0 }}>
-            <button type="submit" className="btn" style={{ width: '100%', fontSize: '1.2rem' }}>INICIAR SECUENCIA</button>
-            <button type="button" className="btn btn-secondary" style={{ width: '100%', border: 'none', color: 'var(--text-muted)' }} onClick={() => setView('landing')}>ABORTAR (VOLVER)</button>
-          </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{width: '100%', maxWidth: '500px'}} className="reveal active">
+        <span className="overline text-center">Paso Final</span>
+        <h2 className="text-center" style={{fontSize: '3rem', marginBottom: '2rem'}}>Activa tu<br/><span style={{fontStyle: 'italic', color: 'var(--primary)'}}>Perfil.</span></h2>
+        
+        {error && <p style={{color: 'var(--primary)', textAlign: 'center', marginBottom: '1rem', fontSize: '0.8rem'}}>{error}</p>}
+
+        <form onSubmit={handleSetup}>
+          <input type="text" placeholder="Nombre Completo" className="input-editorial" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input type="email" placeholder="Correo Electrónico" className="input-editorial" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Crear Contraseña" className="input-editorial" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit" className="btn-luxury" style={{width: '100%', marginTop: '2rem'}} disabled={loading}>{loading ? 'Configurando...' : 'Acceder al Portal'}</button>
         </form>
       </div>
     </div>
   );
 }
 
-function DashboardSidebar({ setView, mode, activeRole, location }) { /* Omitido por brevedad igual que el anterior */
-  const isElite = mode === 'elite';
+function Login({ setView, setUser }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+    } else {
+      setUser(data.user);
+      setView('dashboard');
+    }
+  };
+
   return (
-    <div className="sidebar">
-      <div className="nav-logo" style={{ marginBottom: '1rem', fontSize: '2.5rem' }}>{isElite ? <span style={{color: 'white'}}>ELITE</span> : "SANTUARIO"}</div>
-      <div className="logo-sub" style={{ marginBottom: '4rem', fontSize: '0.7rem' }}>SEDE {location.toUpperCase()}</div>
-      <div style={{fontWeight: '700', marginBottom: '3rem', fontSize: '1.2rem', textTransform: 'uppercase', color: 'var(--border-glow)'}}>{activeRole}</div>
-      <button className="btn btn-secondary" style={{ marginTop: 'auto', padding: '0.8rem', fontSize: '0.7rem' }} onClick={() => setView('splash')}>⏏ CERRAR SESIÓN</button>
-    </div>
-  );
-}
-
-function DashboardAtleta({ setView, mode, location }) {
-  const [selectedCoach, setSelectedCoach] = useState(null);
-
-  const coaches = [
-    { id: 1, name: 'HÉCTOR VEGA', block: 'MATUTINO', hours: '6:00 AM - 10:00 AM', spec: 'HIIT & Fuerza Estructural', bio: 'Comando especialista en levantamientos pesados y resistencia anaeróbica. Su objetivo es llevarte al fallo muscular.' },
-    { id: 2, name: 'SOFÍA REYES', block: 'MEDIO DÍA', hours: '12:00 PM - 2:00 PM', spec: 'Calistenia Funcional', bio: 'Dominio absoluto del peso corporal. Enfocada en técnica pura, equilibrio y movilidad articular avanzada.' },
-    { id: 3, name: 'CARLOS T.', block: 'VESPERTINO', hours: '5:00 PM - 9:00 PM', spec: 'HYROX & Conditioning', bio: 'Resistencia cardiovascular brutal. Su metodología cruza el umbral del dolor para el máximo desempeño.' }
-  ];
-
-  return (
-    <div className="dashboard-layout fade-in">
-      <DashboardSidebar setView={setView} mode={mode} activeRole="Atleta" location={location} />
-      <div className="main-content">
-        <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', marginBottom: '2rem', textShadow: '0 0 20px var(--glow-color)' }}>
-          PERFIL DE ATLETA
-        </h2>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{width: '100%', maxWidth: '400px'}} className="reveal active">
+        <span className="overline text-center">Acceso Restringido</span>
+        <h2 className="text-center" style={{fontSize: '3rem', marginBottom: '3rem'}}>Portal.</h2>
         
-        {/* Roster de Coaches y Horarios */}
-        <div className="dashboard-card fade-in delay-2" style={{ padding: '2rem', margin: '0 0 2rem 0' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>ROSTER DE OPERACIÓN TÁCTICA</h3>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            {coaches.map((coach) => (
-              <div 
-                key={coach.id}
-                className="coach-card" 
-                onClick={() => setSelectedCoach(coach)}
-              >
-                <div style={{color: 'var(--border-glow)', fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>{coach.block} ({coach.hours})</div>
-                <div style={{fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-main)', marginBottom: '0.5rem'}}>{coach.name}</div>
-                <div style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>{coach.spec}</div>
-              </div>
-            ))}
-          </div>
+        {error && <p style={{color: 'var(--primary)', textAlign: 'center', marginBottom: '1rem', fontSize: '0.8rem'}}>{error}</p>}
 
-          {/* Ficha Táctica Modal Interno */}
-          {selectedCoach && (
-            <div className="fade-in" style={{ marginTop: '2rem', padding: '2rem', background: '#000', border: '1px solid var(--border-glow)', position: 'relative', boxShadow: '0 0 30px var(--glow-color)' }}>
-              <button 
-                onClick={() => setSelectedCoach(null)} 
-                style={{position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem'}}
-              >✕</button>
-              <h4 style={{fontSize: '1.5rem', color: 'white', textTransform: 'uppercase', marginBottom: '0.5rem'}}>{selectedCoach.name}</h4>
-              <p style={{color: 'var(--border-glow)', fontWeight: 'bold', marginBottom: '1rem', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase'}}>{selectedCoach.spec}</p>
-              <p style={{color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.9rem'}}>{selectedCoach.bio}</p>
-            </div>
-          )}
-        </div>
-
-        {/* WOD Terminal */}
-        <div className="dashboard-card fade-in delay-3" style={{ padding: '2rem' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>MASTER PROGRAM: W.O.D. (HOY)</h3>
-          <div className="pizarron-wod">
-            <div className="pizarron-fod">
-              <span style={{color: '#00bbff'}}>A) WARM UP (10 MIN)</span>{'\n'}
-              - 3 Rounds Acondicionamiento Base{'\n'}
-              - 15x Push-ups{'\n'}
-              - 20x Air Squats{'\n\n'}
-              <span style={{color: 'var(--border-glow)'}}>B) MAIN PROTOCOL: THE GRIND</span>{'\n'}
-              - EMOM 15 Minutos:{'\n'}
-              - Min 1: 15 Pull-ups Mecánicos{'\n'}
-              - Min 2: 20 Wall Balls{'\n'}
-              - Min 3: Max Calorie Row
-            </div>
-          </div>
-        </div>
+        <form onSubmit={handleLogin}>
+          <input type="email" placeholder="Correo Electrónico" className="input-editorial" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Contraseña" className="input-editorial" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit" className="btn-luxury" style={{width: '100%', marginTop: '2rem'}} disabled={loading}>{loading ? 'Validando...' : 'Ingresar'}</button>
+          <button type="button" style={{width: '100%', marginTop: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'Montserrat', cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase', fontSize: '0.7rem'}} onClick={() => setView('landing')}>Volver al sitio</button>
+        </form>
       </div>
     </div>
   );
 }
 
-function DashboardCoach({ setView, mode, location }) {
+function Dashboard({ setView, user }) {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('landing');
+  };
+
   return (
-    <div className="dashboard-layout fade-in">
-      <DashboardSidebar setView={setView} mode={mode} activeRole="Coach" location={location} />
-      <div className="main-content">
-        <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', marginBottom: '2rem', textShadow: '0 0 20px var(--glow-color)' }}>
-          PANEL DE TRANSMISIÓN
-        </h2>
-        
-        <div className="dashboard-card fade-in delay-2" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', margin: 0 }}>INYECCIÓN DE PROTOCOLO (W.O.D.)</h3>
-            <div className="status-badge" style={{ borderColor: 'var(--text-muted)', color: 'var(--text-muted)', boxShadow: 'none' }}>NO PUBLICADO</div>
-          </div>
-          <p style={{fontSize:'0.8rem', color: 'var(--text-muted)', marginBottom: '1rem'}}>
-            El protocolo que escribas aquí se sincronizará inmediatamente en las pantallas de todos los atletas de la sede {location.toUpperCase()}.
-          </p>
-          <textarea 
-            className="input-field" 
-            rows="10" 
-            placeholder="A) WARM UP...&#10;B) STRENGTH...&#10;C) WOD..."
-            style={{ fontFamily: 'Courier New', resize: 'vertical' }}
-          ></textarea>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-            <button className="btn" style={{ fontSize: '1rem', padding: '1.2rem 2rem' }}>PUBLICAR W.O.D. A TODOS</button>
-          </div>
+    <div style={{ padding: '4rem 5%', maxWidth: '1200px', margin: '0 auto' }} className="reveal active">
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem'}}>
+        <div className="brand-logo">ELITE <span>APP</span></div>
+        <button onClick={handleLogout} style={{background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'Montserrat', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em'}}>Cerrar Sesión</button>
+      </div>
+      
+      <span className="overline">Bienvenido</span>
+      <h2 style={{fontSize: '4rem', marginBottom: '4rem'}}>Membresía <span style={{fontStyle: 'italic', color: 'var(--primary)'}}>Activa.</span></h2>
+      
+      <div className="editorial-grid" style={{marginBottom: '4rem'}}>
+        <div style={{borderTop: '1px solid rgba(255,255,255,0.1)', padding: '2rem 0'}}>
+          <span className="overline">Protocolo de Hoy</span>
+          <h3 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>Hypertrophy</h3>
+          <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Coach: Héctor Vega</p>
+        </div>
+        <div style={{borderTop: '1px solid rgba(255,255,255,0.1)', padding: '2rem 0'}}>
+          <span className="overline">Próxima Reserva</span>
+          <h3 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>Ice Bath</h3>
+          <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Hoy, 19:00 HRS</p>
         </div>
       </div>
-    </div>
-  );
-}
 
-function DashboardAdmin({ setView, mode, location }) {
-  return (
-    <div className="dashboard-layout fade-in">
-      <DashboardSidebar setView={setView} mode={mode} activeRole="Administrador" location={location} />
-      <div className="main-content">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h2 className="fade-in delay-1" style={{ fontSize: '2.5rem', margin: 0, textShadow: '0 0 20px var(--glow-color)' }}>
-            CENTRO DE COMANDO <span style={{color: 'var(--border-glow)'}}>({location.toUpperCase()})</span>
-          </h2>
-          <div className="status-badge fade-in delay-2" style={{ animation: 'pulse 2s infinite' }}>● EN LÍNEA</div>
-        </div>
+      {/* Sección de Pase Personal (QR) */}
+      <div style={{ marginTop: '6rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '6rem' }}>
+        <span className="overline">Pase Digital Elite</span>
+        <h2 style={{fontSize: '2rem', marginBottom: '3rem'}}>Tu Acceso <span style={{fontStyle: 'italic'}}>Personal.</span></h2>
         
-        {/* Métricas Principales */}
-        <div className="admin-metrics-grid fade-in delay-2">
-          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>FLUJO NETO (HOY)</h3>
-            <div className="metric-value metric-primary">$12,450<span style={{fontSize:'1.5rem', color: 'var(--text-muted)'}}>.00</span></div>
-            <div style={{color: '#00bbff', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>▲ +14% VIS A VIS AYER</div>
-          </div>
-          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>MRR STRIPE (MENSUAL)</h3>
-            <div className="metric-value">$142k</div>
-            <div style={{color: '#00bbff', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>▲ DOMICILIACIÓN ACTIVA</div>
-          </div>
-          <div className="dashboard-card" style={{ marginBottom: 0, padding: '2rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>MIEMBROS ACTIVOS</h3>
-            <div className="metric-value">312 <span style={{fontSize:'1.5rem',color:'var(--text-muted)'}}>PX</span></div>
-            <div style={{color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold'}}>CHURN RISK: BAJO (2%)</div>
-          </div>
+        <div style={{ 
+          display: 'inline-block', 
+          padding: '2.5rem', 
+          background: 'white', 
+          borderRadius: '24px',
+          boxShadow: '0 30px 60px rgba(0,0,0,0.4)'
+        }}>
+          <QRCodeCanvas 
+            value={user?.id || 'invitado'} 
+            size={220}
+            level={"H"}
+            includeMargin={true}
+          />
         </div>
-
-        {/* Capacidad y Gráfico Crítico */}
-        <div className="dashboard-card fade-in delay-3" style={{ padding: '2rem', marginTop: '2rem' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>CAPACIDAD OPERATIVA DE INSTALACIÓN</h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span style={{fontWeight: '900', fontSize: '1.2rem', color: 'var(--text-main)'}}>82% OCUPACIÓN ACTUAL</span>
-            <span style={{color: 'var(--border-glow)', fontWeight: 'bold'}}>ZONA ÓPTIMA</span>
-          </div>
-          <div className="progress-bar-container">
-            <div className="progress-bar-fill" style={{width: '82%'}}></div>
-          </div>
-        </div>
-
-        {/* Feed de Operaciones en Vivo */}
-        <div className="dashboard-card fade-in delay-4" style={{ padding: '2rem', margin: '2rem 0' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>REGISTRO TÁCTICO (LIVE TERMINAL)</h3>
-          <div className="admin-table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Hora</th>
-                  <th>Operativo (Atleta)</th>
-                  <th>Transacción</th>
-                  <th>Status</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Hace 2 min</td>
-                  <td>Sofía Méndez</td>
-                  <td>Pago Domiciliado (Stripe)</td>
-                  <td style={{color: '#00bbff'}}>Completado</td>
-                  <td>$1,000.00</td>
-                </tr>
-                <tr>
-                  <td>Hace 15 min</td>
-                  <td>Carlos R.</td>
-                  <td>Check-In QR (Recepción)</td>
-                  <td style={{color: '#00bbff'}}>Ingreso</td>
-                  <td>-</td>
-                </tr>
-                <tr>
-                  <td>Hace 42 min</td>
-                  <td>Héctor Vargas</td>
-                  <td>Suscripción (Efectivo)</td>
-                  <td style={{color: '#00bbff'}}>Completado</td>
-                  <td>$800.00</td>
-                </tr>
-                <tr style={{ opacity: 0.6 }}>
-                  <td>Hace 1 hr</td>
-                  <td>Diego C.</td>
-                  <td>Cobro Fallido (Fondos insuficientes)</td>
-                  <td style={{color: 'var(--primary)'}}>Denegado</td>
-                  <td>$1,000.00</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <p style={{ marginTop: '2rem', color: 'var(--text-muted)', fontFamily: 'Montserrat', fontSize: '0.9rem', fontWeight: '300' }}>
+          Muestra este código al lector oficial en recepción.
+        </p>
       </div>
     </div>
   );
 }
 
 // ============================================
-// MAIN APP ROUTER CORE
+// MAIN ROUTER
 // ============================================
-function App() {
-  const [view, setView] = useState('splash');
-  const [mode, setMode] = useState('classic'); 
-  const [location, setLocation] = useState('puebla'); // 'puebla', 'cancun', 'hermosillo'
+export default function App() {
+  const [view, setView] = useState('landing');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Escuchar cambios de sesión
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session) setView('dashboard');
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session) setView('dashboard');
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   switch (view) {
-    case 'splash': return <SplashSelector setView={setView} setMode={setMode} setLocation={setLocation} />;
-    case 'landing': return <Landing setView={setView} mode={mode} location={location} />;
-    case 'login': return <Login setView={setView} mode={mode} location={location} />;
-    case 'dashboard_atleta': return <DashboardAtleta setView={setView} mode={mode} location={location} />;
-    case 'dashboard_coach': return <DashboardCoach setView={setView} mode={mode} location={location} />;
-    case 'dashboard_admin': return <DashboardAdmin setView={setView} mode={mode} location={location} />;
-    default: return <SplashSelector setView={setView} setMode={setMode} setLocation={setLocation} />;
+    case 'landing': return <Landing setView={setView} />;
+    case 'login': return <Login setView={setView} setUser={setUser} />;
+    case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} />;
+    case 'dashboard': return <Dashboard setView={setView} user={user} />;
+    default: return <Landing setView={setView} />;
   }
 }
-
-export default App;
