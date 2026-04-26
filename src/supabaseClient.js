@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// TODO: Para conectar tu base de datos real, pega aquí tus llaves de Supabase
-// Estas llaves las encuentras en Supabase > Configuración del Proyecto > API
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tu-proyecto-aqui.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'tu-anon-key-aqui';
+const supabaseUrl = 'https://zddvjgnrxwfhildukpjg.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkZHZqZ25yeHdmaGlsZHVrcGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwODUyMDksImV4cCI6MjA5MjY2MTIwOX0.WFM5D4UGFyqQIz_Iox2DOhGijGqZp3HtbfJe1kKszUU';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
