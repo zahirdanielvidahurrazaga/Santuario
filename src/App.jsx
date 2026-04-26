@@ -307,57 +307,318 @@ function Login({ setView, setUser }) {
   );
 }
 
-function Dashboard({ setView, user }) {
+// ============================================
+// CLIENT PORTAL (APP MODE)
+// ============================================
+function ClientPortal({ setView, user }) {
+  const [occupancy, setOccupancy] = useState(0);
+  const [profile, setProfile] = useState(null);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setView('landing');
   };
 
+  // Fetch profile and occupancy
+  useEffect(() => {
+    const fetchData = async () => {
+      // Get user profile
+      const { data: prof } = await supabase.from('users').select('*').eq('id', user.id).single();
+      if (prof) setProfile(prof);
+
+      // Get current occupancy (check-ins today without check-out)
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('attendance')
+        .select('*', { count: 'exact', head: true })
+        .gte('checked_in_at', today)
+        .is('checked_out_at', null);
+      setOccupancy(count || 0);
+    };
+    fetchData();
+
+    // Poll occupancy every 30 seconds
+    const interval = setInterval(async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('attendance')
+        .select('*', { count: 'exact', head: true })
+        .gte('checked_in_at', today)
+        .is('checked_out_at', null);
+      setOccupancy(count || 0);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const schedule = [
+    { day: 'Lunes', type: 'PULL', am: '6:00 - 7:30', pm: '16:30 - 18:00', coach: 'Héctor Vega' },
+    { day: 'Martes', type: 'PIERNA', am: '7:30 - 9:00', pm: '18:00 - 19:30', coach: 'Daniel Ramos' },
+    { day: 'Miércoles', type: 'PUSH', am: '6:00 - 7:30', pm: '16:30 - 18:00', coach: 'Héctor Vega' },
+    { day: 'Jueves', type: 'PIERNA', am: '7:30 - 9:00', pm: '18:00 - 19:30', coach: 'Daniel Ramos' },
+    { day: 'Viernes', type: 'PULL/PUSH', am: '9:00 - 10:30', pm: '—', coach: 'Héctor Vega' },
+    { day: 'Sábado', type: 'GRUPAL', am: '8:00 - 9:30', pm: '—', coach: 'Equipo Elite' },
+  ];
+
   return (
-    <div style={{ padding: '4rem 5%', maxWidth: '1200px', margin: '0 auto' }} className="reveal active">
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem'}}>
+    <div className="app-shell">
+      <div className="app-header">
         <div className="brand-logo">ELITE <span>APP</span></div>
-        <button onClick={handleLogout} style={{background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'Montserrat', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em'}}>Cerrar Sesión</button>
+        <button onClick={handleLogout}>Cerrar Sesión</button>
       </div>
-      
-      <span className="overline">Bienvenido</span>
-      <h2 style={{fontSize: '4rem', marginBottom: '4rem'}}>Membresía <span style={{fontStyle: 'italic', color: 'var(--primary)'}}>Activa.</span></h2>
-      
-      <div className="editorial-grid" style={{marginBottom: '4rem'}}>
-        <div style={{borderTop: '1px solid rgba(255,255,255,0.1)', padding: '2rem 0'}}>
-          <span className="overline">Protocolo de Hoy</span>
-          <h3 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>Hypertrophy</h3>
-          <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Coach: Héctor Vega</p>
+
+      {/* Occupancy */}
+      <div className="occupancy-card">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'0.5rem'}}>
+          <span className="pulse-dot"></span>
+          <span className="occupancy-label">En vivo</span>
         </div>
-        <div style={{borderTop: '1px solid rgba(255,255,255,0.1)', padding: '2rem 0'}}>
-          <span className="overline">Próxima Reserva</span>
-          <h3 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>Ice Bath</h3>
-          <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Hoy, 19:00 HRS</p>
+        <div className="occupancy-number">{occupancy}</div>
+        <div className="occupancy-label">personas en Santuario ahora</div>
+      </div>
+
+      {/* QR Pass */}
+      <div className="app-section" style={{textAlign:'center'}}>
+        <div className="app-section-title">Pase Digital Elite</div>
+        <div style={{display:'inline-block',padding:'2rem',background:'white',borderRadius:'20px',boxShadow:'0 20px 50px rgba(0,0,0,0.4)'}}>
+          <QRCodeCanvas value={user?.id || 'invitado'} size={200} level={"H"} includeMargin={true} />
+        </div>
+        <p style={{marginTop:'1.5rem',color:'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.8rem',fontWeight:'300'}}>Muestra este código al lector en recepción.</p>
+      </div>
+
+      {/* My Plan */}
+      <div className="app-section">
+        <div className="app-section-title">Mi Membresía</div>
+        <div className="plan-card">
+          <div>
+            <h3 style={{fontFamily:'Playfair Display',fontSize:'1.5rem',marginBottom:'0.3rem'}}>{profile?.membership_plan || 'Sin plan asignado'}</h3>
+            <p style={{fontFamily:'Montserrat',fontWeight:'300',fontSize:'0.85rem',color:'var(--text-muted)'}}>
+              {profile?.membership_expiry ? `Vence: ${new Date(profile.membership_expiry).toLocaleDateString('es-MX')}` : 'Contacta al administrador'}
+            </p>
+          </div>
+          <span className={profile?.membership_status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}>
+            {profile?.membership_status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
+          </span>
         </div>
       </div>
 
-      {/* Sección de Pase Personal (QR) */}
-      <div style={{ marginTop: '6rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '6rem' }}>
-        <span className="overline">Pase Digital Elite</span>
-        <h2 style={{fontSize: '2rem', marginBottom: '3rem'}}>Tu Acceso <span style={{fontStyle: 'italic'}}>Personal.</span></h2>
-        
-        <div style={{ 
-          display: 'inline-block', 
-          padding: '2.5rem', 
-          background: 'white', 
-          borderRadius: '24px',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.4)'
-        }}>
-          <QRCodeCanvas 
-            value={user?.id || 'invitado'} 
-            size={220}
-            level={"H"}
-            includeMargin={true}
-          />
+      {/* Schedule */}
+      <div className="app-section">
+        <div className="app-section-title">Horarios & Coaches</div>
+        <div style={{overflowX:'auto'}}>
+          <table className="schedule-table">
+            <thead><tr><th>Día</th><th>Clase</th><th>AM</th><th>PM</th><th>Coach</th></tr></thead>
+            <tbody>
+              {schedule.map((s, i) => (
+                <tr key={i}><td>{s.day}</td><td>{s.type}</td><td>{s.am}</td><td>{s.pm}</td><td>{s.coach}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <p style={{ marginTop: '2rem', color: 'var(--text-muted)', fontFamily: 'Montserrat', fontSize: '0.9rem', fontWeight: '300' }}>
-          Muestra este código al lector oficial en recepción.
-        </p>
+      </div>
+
+      {/* Open Gym Hours */}
+      <div className="app-section">
+        <div className="app-section-title">Open Gym (Máquinas)</div>
+        <table className="schedule-table">
+          <tbody>
+            <tr><td>Lunes - Viernes</td><td>6:00 - 21:00</td></tr>
+            <tr><td>Sábado</td><td>8:00 - 12:00</td></tr>
+            <tr><td>Domingo</td><td>Cerrado</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// ADMIN DASHBOARD
+// ============================================
+function AdminDashboard({ setView, user }) {
+  const [scanInput, setScanInput] = useState('');
+  const [scanLog, setScanLog] = useState([]);
+  const [flashAlert, setFlashAlert] = useState(null);
+  const [stats, setStats] = useState({ occupancy: 0, checkinsToday: 0, totalMembers: 0, monthlyRevenue: 0 });
+  const [members, setMembers] = useState([]);
+  const scanRef = useRef(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('landing');
+  };
+
+  // Fetch stats and members
+  useEffect(() => {
+    const fetchAll = async () => {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Occupancy
+      const { count: occ } = await supabase.from('attendance').select('*', { count: 'exact', head: true }).gte('checked_in_at', today).is('checked_out_at', null);
+
+      // Check-ins today
+      const { count: checkins } = await supabase.from('attendance').select('*', { count: 'exact', head: true }).gte('checked_in_at', today);
+
+      // Total members
+      const { count: total } = await supabase.from('users').select('*', { count: 'exact', head: true });
+
+      // Members list
+      const { data: memberList } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(20);
+
+      // Today's scan log
+      const { data: todayScans } = await supabase
+        .from('attendance')
+        .select('*, users(full_name, membership_status)')
+        .gte('checked_in_at', today)
+        .order('checked_in_at', { ascending: false })
+        .limit(20);
+
+      setStats({ occupancy: occ || 0, checkinsToday: checkins || 0, totalMembers: total || 0, monthlyRevenue: 0 });
+      setMembers(memberList || []);
+      setScanLog(todayScans || []);
+    };
+    fetchAll();
+
+    // Refresh every 15 seconds
+    const interval = setInterval(fetchAll, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-focus scanner
+  useEffect(() => { if (scanRef.current) scanRef.current.focus(); }, []);
+
+  // Handle QR Scan
+  const handleScan = async (e) => {
+    if (e.key !== 'Enter' || !scanInput.trim()) return;
+    const userId = scanInput.trim();
+    setScanInput('');
+
+    // Look up user
+    const { data: scannedUser, error } = await supabase.from('users').select('*').eq('id', userId).single();
+
+    if (error || !scannedUser) {
+      setFlashAlert({ type: 'error', message: '⚠ Usuario no encontrado en el sistema.' });
+      setTimeout(() => setFlashAlert(null), 4000);
+      return;
+    }
+
+    const isActive = scannedUser.membership_status === 'ACTIVE';
+
+    if (isActive) {
+      // Register check-in
+      await supabase.from('attendance').insert({ user_id: userId, method: 'QR' });
+      setFlashAlert({ type: 'success', message: `✓ ${scannedUser.full_name || scannedUser.email} — MEMBRESÍA ACTIVA` });
+
+      // Update stats
+      setStats(prev => ({ ...prev, occupancy: prev.occupancy + 1, checkinsToday: prev.checkinsToday + 1 }));
+
+      // Add to scan log
+      setScanLog(prev => [{ users: scannedUser, checked_in_at: new Date().toISOString(), status: 'success' }, ...prev]);
+    } else {
+      setFlashAlert({ type: 'error', message: `⚠ ${scannedUser.full_name || scannedUser.email} — MEMBRESÍA INACTIVA` });
+      setScanLog(prev => [{ users: scannedUser, checked_in_at: new Date().toISOString(), status: 'error' }, ...prev]);
+    }
+
+    setTimeout(() => setFlashAlert(null), 5000);
+    if (scanRef.current) scanRef.current.focus();
+  };
+
+  // Financial chart data (simulated weeks of current month)
+  const weeklyData = [
+    { label: 'Sem 1', value: 35000 },
+    { label: 'Sem 2', value: 42000 },
+    { label: 'Sem 3', value: 38000 },
+    { label: 'Sem 4', value: 27000 },
+  ];
+  const maxVal = Math.max(...weeklyData.map(w => w.value));
+  const totalRevenue = weeklyData.reduce((a, b) => a + b.value, 0);
+
+  return (
+    <div className="app-shell">
+      <div className="app-header">
+        <div className="brand-logo">ELITE <span style={{color:'var(--primary)'}}>ADMIN</span></div>
+        <button onClick={handleLogout}>Cerrar Sesión</button>
+      </div>
+
+      {/* Flash Alert */}
+      {flashAlert && <div className={`flash-alert ${flashAlert.type}`}>{flashAlert.message}</div>}
+
+      {/* Stat Cards */}
+      <div className="stat-grid">
+        <div className="stat-card highlight">
+          <div className="stat-label"><span className="pulse-dot"></span> En el Gym</div>
+          <div className="stat-value">{stats.occupancy}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Check-ins Hoy</div>
+          <div className="stat-value">{stats.checkinsToday}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Socios</div>
+          <div className="stat-value">{stats.totalMembers}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Ingresos Mes</div>
+          <div className="stat-value" style={{fontSize:'1.5rem'}}>${totalRevenue.toLocaleString()}</div>
+        </div>
+      </div>
+
+      {/* QR Scanner */}
+      <div className="app-section">
+        <div className="app-section-title">Lector de Acceso QR</div>
+        <input
+          ref={scanRef}
+          className="scanner-input"
+          placeholder="Esperando escaneo del lector..."
+          value={scanInput}
+          onChange={(e) => setScanInput(e.target.value)}
+          onKeyDown={handleScan}
+          autoFocus
+        />
+      </div>
+
+      {/* Scan Log */}
+      <div className="app-section">
+        <div className="app-section-title">Entradas de Hoy</div>
+        {scanLog.length === 0 && <p style={{color:'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.85rem'}}>Sin registros aún.</p>}
+        {scanLog.slice(0, 10).map((entry, i) => (
+          <div key={i} className={`scan-entry ${entry.status || (entry.users?.membership_status === 'ACTIVE' ? 'success' : 'error')}`}>
+            <span className="scan-name">{entry.users?.full_name || entry.users?.email || 'Desconocido'}</span>
+            <span className="scan-time">{new Date(entry.checked_in_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Financial Chart */}
+      <div className="app-section">
+        <div className="app-section-title">Ingresos Semanales</div>
+        <div className="chart-bars">
+          {weeklyData.map((w, i) => (
+            <div key={i} className="chart-bar" style={{ height: `${(w.value / maxVal) * 100}%` }}></div>
+          ))}
+        </div>
+        <div className="chart-labels">
+          {weeklyData.map((w, i) => <span key={i}>{w.label}</span>)}
+        </div>
+      </div>
+
+      {/* Members Table */}
+      <div className="app-section">
+        <div className="app-section-title">Socios Registrados</div>
+        <div style={{overflowX:'auto'}}>
+          <table className="socios-table">
+            <thead><tr><th>Nombre</th><th>Plan</th><th>Status</th></tr></thead>
+            <tbody>
+              {members.map((m, i) => (
+                <tr key={i}>
+                  <td>{m.full_name || m.email}</td>
+                  <td>{m.membership_plan || '—'}</td>
+                  <td><span className={m.membership_status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}>{m.membership_status === 'ACTIVE' ? 'Activa' : 'Inactiva'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -369,27 +630,45 @@ function Dashboard({ setView, user }) {
 export default function App() {
   const [view, setView] = useState('landing');
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
-    // Escuchar cambios de sesión
+    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session) setView('dashboard');
+      if (session?.user) {
+        setUser(session.user);
+        fetchRole(session.user.id);
+      }
     });
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session) setView('dashboard');
+      if (session?.user) {
+        setUser(session.user);
+        fetchRole(session.user.id);
+      } else {
+        setUser(null);
+        setRole(null);
+        setView('landing');
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const fetchRole = async (userId) => {
+    const { data } = await supabase.from('users').select('role').eq('id', userId).single();
+    const userRole = data?.role || 'CLIENT';
+    setRole(userRole);
+    setView(userRole === 'ADMIN' ? 'admin' : 'client-portal');
+  };
+
   switch (view) {
     case 'landing': return <Landing setView={setView} />;
     case 'login': return <Login setView={setView} setUser={setUser} />;
     case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} />;
-    case 'dashboard': return <Dashboard setView={setView} user={user} />;
+    case 'client-portal': return user ? <ClientPortal setView={setView} user={user} /> : <Landing setView={setView} />;
+    case 'admin': return user ? <AdminDashboard setView={setView} user={user} /> : <Landing setView={setView} />;
     default: return <Landing setView={setView} />;
   }
 }
