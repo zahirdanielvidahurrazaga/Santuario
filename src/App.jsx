@@ -65,7 +65,7 @@ function StripeCheckout({ selectedPlan, onClose, onSuccess }) {
 // ============================================
 // MAIN EDITORIAL LANDING PAGE
 // ============================================
-function Landing({ setView }) {
+function Landing({ setView, setSelectedPlan }) {
   const [checkoutPlan, setCheckoutPlan] = useState(null);
 
   // Intersection Observer for Reveal Animations
@@ -206,7 +206,7 @@ function Landing({ setView }) {
       </footer>
 
       {checkoutPlan && (
-        <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setCheckoutPlan(null); setView('setup-account'); }} />
+        <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setSelectedPlan(checkoutPlan); setCheckoutPlan(null); setView('setup-account'); }} />
       )}
     </>
   );
@@ -215,7 +215,7 @@ function Landing({ setView }) {
 // ============================================
 // COMPLETE ACCOUNT SETUP (POST-PAYMENT)
 // ============================================
-function SetupAccount({ setView, setUser }) {
+function SetupAccount({ setView, setUser, selectedPlan }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -241,9 +241,19 @@ function SetupAccount({ setView, setUser }) {
       setError(signUpError.message);
       setLoading(false);
     } else {
+      // Activar membresía con el plan que pagó
+      if (data.user) {
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + 1);
+        await supabase.from('users').update({
+          membership_plan: selectedPlan?.title || 'Plan Elite',
+          membership_status: 'ACTIVE',
+          membership_expiry: expiry.toISOString().split('T')[0]
+        }).eq('id', data.user.id);
+      }
       setUser(data.user);
-      alert("¡Cuenta configurada! Bienvenida a Santuario Elite.");
-      setView('dashboard');
+      alert('¡Cuenta configurada! Bienvenido a Santuario Elite.');
+      setView('client-portal');
     }
   };
 
@@ -631,9 +641,9 @@ export default function App() {
   const [view, setView] = useState('landing');
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
-    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -641,7 +651,6 @@ export default function App() {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
@@ -664,11 +673,11 @@ export default function App() {
   };
 
   switch (view) {
-    case 'landing': return <Landing setView={setView} />;
+    case 'landing': return <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
     case 'login': return <Login setView={setView} setUser={setUser} />;
-    case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} />;
-    case 'client-portal': return user ? <ClientPortal setView={setView} user={user} /> : <Landing setView={setView} />;
-    case 'admin': return user ? <AdminDashboard setView={setView} user={user} /> : <Landing setView={setView} />;
-    default: return <Landing setView={setView} />;
+    case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} selectedPlan={selectedPlan} />;
+    case 'client-portal': return user ? <ClientPortal setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
+    case 'admin': return user ? <AdminDashboard setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
+    default: return <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
   }
 }
