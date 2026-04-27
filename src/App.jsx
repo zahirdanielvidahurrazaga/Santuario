@@ -528,6 +528,16 @@ function AdminDashboard({ setView, user }) {
     if (scanRef.current) scanRef.current.focus();
   };
 
+  // Delete an entry
+  const handleDeleteEntry = async (id) => {
+    if (!window.confirm('¿Eliminar este registro de entrada?')) return;
+    const { error } = await supabase.from('attendance').delete().eq('id', id);
+    if (!error) {
+      setScanLog(prev => prev.filter(entry => entry.id !== id));
+      setStats(prev => ({ ...prev, occupancy: Math.max(0, prev.occupancy - 1), checkinsToday: Math.max(0, prev.checkinsToday - 1) }));
+    }
+  };
+
   // Financial data
   const weeklyData = [
     { label: 'Sem 1', value: 35000 },
@@ -618,9 +628,19 @@ function AdminDashboard({ setView, user }) {
             <div className="app-section-title">Entradas de Hoy</div>
             {scanLog.length === 0 && <p style={{color:'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.85rem'}}>Sin registros aún.</p>}
             {scanLog.slice(0, 15).map((entry, i) => (
-              <div key={i} className={`scan-entry ${entry.status || (entry.users?.membership_status === 'ACTIVE' ? 'success' : 'error')}`}>
-                <span className="scan-name">{entry.users?.full_name || entry.users?.email || 'Desconocido'}</span>
-                <span className="scan-time">{new Date(entry.checked_in_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+              <div key={i} className={`scan-entry ${entry.status || (entry.users?.membership_status === 'ACTIVE' ? 'success' : 'error')}`} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <div>
+                  <span className="scan-name">{entry.users?.full_name || entry.users?.email || 'Desconocido'}</span>
+                  <span className="scan-time">{new Date(entry.checked_in_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                {entry.id && (
+                  <button 
+                    onClick={() => handleDeleteEntry(entry.id)}
+                    style={{background:'transparent', border:'none', color:'var(--primary)', cursor:'pointer', fontSize:'0.7rem', opacity:0.6}}
+                  >
+                    ELIMINAR
+                  </button>
+                )}
               </div>
             ))}
           </div>
