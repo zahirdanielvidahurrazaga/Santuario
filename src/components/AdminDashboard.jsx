@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
+import { ShieldCheck, LineChart, ScanLine, Clock, TrendingUp, Users, Flame, X } from 'lucide-react';
 
 export default function AdminDashboard({ setView, user }) {
   const [adminTab, setAdminTab] = useState('access'); // 'access' or 'financial'
@@ -9,6 +10,7 @@ export default function AdminDashboard({ setView, user }) {
   const [scannedProfile, setScannedProfile] = useState(null);
   const [stats, setStats] = useState({ occupancy: 0, checkinsToday: 0, totalMembers: 0 });
   const [members, setMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null);
   const scanRef = useRef(null);
 
   const handleLogout = async () => {
@@ -113,11 +115,11 @@ export default function AdminDashboard({ setView, user }) {
 
       {/* Tab Navigation */}
       <div style={{display:'flex',gap:'0',marginBottom:'2rem',borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
-        <button onClick={() => setAdminTab('access')} style={{flex:1,padding:'1rem',background:'transparent',border:'none',color: adminTab === 'access' ? 'var(--text-main)' : 'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.15em',fontWeight: adminTab === 'access' ? '600' : '300',cursor:'pointer',borderBottom: adminTab === 'access' ? '2px solid var(--primary)' : '2px solid transparent',transition:'all 0.3s'}}>
-          Control de Acceso
+        <button onClick={() => setAdminTab('access')} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'1rem',background:'transparent',border:'none',color: adminTab === 'access' ? 'var(--text-main)' : 'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.15em',fontWeight: adminTab === 'access' ? '600' : '300',cursor:'pointer',borderBottom: adminTab === 'access' ? '2px solid var(--primary)' : '2px solid transparent',transition:'all 0.3s'}}>
+          <ShieldCheck size={16} /> Control de Acceso
         </button>
-        <button onClick={() => setAdminTab('financial')} style={{flex:1,padding:'1rem',background:'transparent',border:'none',color: adminTab === 'financial' ? 'var(--text-main)' : 'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.15em',fontWeight: adminTab === 'financial' ? '600' : '300',cursor:'pointer',borderBottom: adminTab === 'financial' ? '2px solid var(--primary)' : '2px solid transparent',transition:'all 0.3s'}}>
-          Financiero
+        <button onClick={() => setAdminTab('financial')} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'1rem',background:'transparent',border:'none',color: adminTab === 'financial' ? 'var(--text-main)' : 'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.15em',fontWeight: adminTab === 'financial' ? '600' : '300',cursor:'pointer',borderBottom: adminTab === 'financial' ? '2px solid var(--primary)' : '2px solid transparent',transition:'all 0.3s'}}>
+          <LineChart size={16} /> Financiero
         </button>
       </div>
 
@@ -130,7 +132,7 @@ export default function AdminDashboard({ setView, user }) {
 
             {/* QR Scanner */}
             <div className="app-section" style={{borderTop: 'none', paddingTop: 0}}>
-              <div className="app-section-title">Lector de Acceso QR</div>
+              <div className="app-section-title"><ScanLine size={16} className="lucide-icon"/> Lector de Acceso QR</div>
               <input
                 ref={scanRef}
                 className="scanner-input"
@@ -175,7 +177,7 @@ export default function AdminDashboard({ setView, user }) {
             {/* Stat Cards */}
             <div className="stat-grid" style={{marginBottom: '2rem'}}>
               <div className="stat-card highlight">
-                <div className="stat-label"><span className="pulse-dot"></span> En el Gym</div>
+                <div className="stat-label" style={{display:'flex', alignItems:'center'}}><span className="pulse-dot"></span><Flame size={12} style={{marginRight:'4px'}}/> En el Gym</div>
                 <div className="stat-value">{stats.occupancy}</div>
               </div>
               <div className="stat-card">
@@ -186,7 +188,7 @@ export default function AdminDashboard({ setView, user }) {
 
             {/* Scan Log */}
             <div className="app-section" style={{borderTop: 'none', paddingTop: 0}}>
-              <div className="app-section-title">Entradas de Hoy</div>
+              <div className="app-section-title"><Clock size={16} className="lucide-icon"/> Entradas de Hoy</div>
               <div style={{background: 'rgba(255,255,255,0.01)', borderRadius: '16px', padding: '1rem', border: '1px solid rgba(255,255,255,0.03)'}}>
                 {scanLog.length === 0 && <p style={{color:'var(--text-muted)',fontFamily:'Montserrat',fontSize:'0.85rem'}}>Sin registros aún.</p>}
                 {scanLog.slice(0, 15).map((entry, i) => (
@@ -237,7 +239,7 @@ export default function AdminDashboard({ setView, user }) {
 
             {/* Chart */}
             <div className="app-section" style={{borderTop: 'none', paddingTop: 0}}>
-              <div className="app-section-title">Ingresos Semanales</div>
+              <div className="app-section-title"><TrendingUp size={16} className="lucide-icon"/> Ingresos Semanales</div>
               <div style={{background: 'rgba(255,255,255,0.01)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.03)'}}>
                 <div className="chart-bars">
                   {weeklyData.map((w, i) => (
@@ -255,14 +257,14 @@ export default function AdminDashboard({ setView, user }) {
           <div>
             {/* Members Table */}
             <div className="app-section" style={{borderTop: 'none', paddingTop: 0}}>
-              <div className="app-section-title">Socios Registrados</div>
+              <div className="app-section-title"><Users size={16} className="lucide-icon"/> Socios Registrados</div>
               <div style={{background: 'rgba(255,255,255,0.01)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.03)', overflowX:'auto'}}>
                 <table className="socios-table">
                   <thead><tr><th>Nombre</th><th>Plan</th><th>Vencimiento</th><th>Status</th></tr></thead>
                   <tbody>
                     {members.map((m, i) => (
                       <tr key={i}>
-                        <td>{m.full_name || m.email}</td>
+                        <td><span className="clickable-name" onClick={() => setSelectedMember(m)}>{m.full_name || m.email}</span></td>
                         <td>{m.membership_plan || '—'}</td>
                         <td>{m.membership_expiry ? new Date(m.membership_expiry).toLocaleDateString('es-MX') : '—'}</td>
                         <td><span className={m.membership_status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}>{m.membership_status === 'ACTIVE' ? 'Activa' : 'Inactiva'}</span></td>
@@ -271,6 +273,56 @@ export default function AdminDashboard({ setView, user }) {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK ACTION MODAL */}
+      {selectedMember && (
+        <div className="stripe-modal-overlay" onClick={() => setSelectedMember(null)}>
+          <div className="stripe-modal" onClick={e => e.stopPropagation()} style={{textAlign: 'center', padding: '2rem'}}>
+            <button onClick={() => setSelectedMember(null)} style={{position: 'absolute', top: '15px', right: '15px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex'}}>
+              <X size={20} />
+            </button>
+            
+            <h2 style={{fontSize: '2rem', marginBottom: '0.5rem'}}>{selectedMember.full_name || selectedMember.email}</h2>
+            <p style={{color: 'var(--primary)', fontFamily: 'Montserrat', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem'}}>{selectedMember.membership_plan || 'Sin plan'}</p>
+            <p style={{color: 'var(--text-muted)', fontFamily: 'Montserrat', fontSize: '0.85rem', marginBottom: '2rem'}}>
+              Estado: <span style={{color: selectedMember.membership_status === 'ACTIVE' ? '#4ade80' : '#ef4444', fontWeight: '600'}}>{selectedMember.membership_status === 'ACTIVE' ? 'Activo' : 'Inactivo'}</span>
+              {selectedMember.membership_expiry && ` · Vence: ${new Date(selectedMember.membership_expiry).toLocaleDateString('es-MX')}`}
+            </p>
+            
+            <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+              <button className="btn-luxury" style={{width: '100%', padding: '1rem'}} onClick={async () => {
+                const expiry = new Date();
+                expiry.setMonth(expiry.getMonth() + 1);
+                const { error } = await supabase.from('users').update({
+                  membership_status: 'ACTIVE',
+                  membership_expiry: expiry.toISOString().split('T')[0]
+                }).eq('id', selectedMember.id);
+                if (error) { alert('Error: ' + error.message); } 
+                else { 
+                  alert(`¡Membresía renovada! ${selectedMember.full_name || selectedMember.email} ahora está activo hasta ${expiry.toLocaleDateString('es-MX')}.`);
+                  setSelectedMember({...selectedMember, membership_status: 'ACTIVE', membership_expiry: expiry.toISOString().split('T')[0]});
+                  setMembers(prev => prev.map(m => m.id === selectedMember.id ? {...m, membership_status: 'ACTIVE', membership_expiry: expiry.toISOString().split('T')[0]} : m));
+                }
+              }}>Renovar Membresía (+1 mes)</button>
+              <button className="btn-luxury" style={{width: '100%', padding: '1rem', borderColor: 'rgba(255,255,255,0.1)'}} onClick={async () => {
+                const { count } = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('user_id', selectedMember.id);
+                alert(`${selectedMember.full_name || selectedMember.email} tiene ${count || 0} registros de asistencia en total.`);
+              }}>Ver Historial de Asistencia</button>
+              <button style={{background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', width: '100%', padding: '1rem', borderRadius: '12px', fontFamily: 'Montserrat', fontWeight: '300', cursor: 'pointer', transition: 'all 0.3s'}} onMouseOver={e => e.target.style.background='rgba(239, 68, 68, 0.1)'} onMouseOut={e => e.target.style.background='transparent'} onClick={async () => { 
+                if(window.confirm(`¿Estás seguro de revocar el acceso a ${selectedMember.full_name || selectedMember.email}?`)) {
+                  const { error } = await supabase.from('users').update({ membership_status: 'INACTIVE' }).eq('id', selectedMember.id);
+                  if (error) { alert('Error: ' + error.message); }
+                  else {
+                    alert('Acceso revocado exitosamente.');
+                    setSelectedMember({...selectedMember, membership_status: 'INACTIVE'});
+                    setMembers(prev => prev.map(m => m.id === selectedMember.id ? {...m, membership_status: 'INACTIVE'} : m));
+                  }
+                }
+              }}>Revocar Acceso</button>
             </div>
           </div>
         </div>
