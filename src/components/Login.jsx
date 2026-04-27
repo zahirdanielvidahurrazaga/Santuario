@@ -41,10 +41,6 @@ export default function Login({ setView, setUser }) {
             <button type="button" style={{background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'Montserrat', cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase', fontSize: '0.65rem'}} onClick={() => setView('landing')}>Volver al sitio</button>
           </div>
           
-          <div style={{marginTop: '2rem', padding: '1rem', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '12px', textAlign: 'center'}}>
-            <p style={{color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em'}}>Acceso Rápido (Dev)</p>
-            <button type="button" className="btn-luxury" style={{width: '100%', padding: '0.8rem', fontSize: '0.7rem'}} onClick={() => setView('coach')}>Entrar como Coach</button>
-          </div>
         </form>
       </div>
     </div>
