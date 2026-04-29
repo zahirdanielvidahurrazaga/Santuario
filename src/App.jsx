@@ -79,10 +79,12 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className="app-root-container">
       <div className="ambient-glow-red"></div>
       <div className="ambient-glow-blue"></div>
-      {renderView()}
-    </>
+      <div className="main-content-wrapper">
+        {renderView()}
+      </div>
+    </div>
   );
 }
