@@ -41,8 +41,16 @@ export default function App() {
   }, []);
 
   const fetchRole = async (userId) => {
-    const { data } = await supabase.from('users').select('role').eq('id', userId).single();
+    console.log("Buscando rol para ID:", userId);
+    const { data, error } = await supabase.from('users').select('role').eq('id', userId).single();
+    
+    if (error) {
+      console.error("Error obteniendo rol:", error);
+    }
+    
     const userRole = data?.role || 'CLIENT';
+    console.log("Rol obtenido:", userRole);
+    
     setRole(userRole);
     if (userRole === 'ADMIN') setView('admin');
     else if (userRole === 'COACH') setView('coach');
