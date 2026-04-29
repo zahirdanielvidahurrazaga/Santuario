@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT,
-  role TEXT DEFAULT 'CLIENT',
+  role TEXT DEFAULT 'CLIENT' CHECK (role IN ('ADMIN', 'COACH', 'CLIENT')),
   membership_plan TEXT,
-  membership_status TEXT DEFAULT 'INACTIVE',
+  membership_status TEXT DEFAULT 'INACTIVE' CHECK (membership_status IN ('ACTIVE', 'INACTIVE')),
   membership_expiry DATE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -100,20 +100,26 @@ DROP POLICY IF EXISTS "Athlete updates own workouts" ON public.workouts;
 DROP POLICY IF EXISTS "Users read own messages" ON public.messages;
 DROP POLICY IF EXISTS "Users send messages" ON public.messages;
 
+-- Helper Function to avoid infinite recursion
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
 -- USERS
 CREATE POLICY "Users read own profile" ON public.users FOR SELECT USING (
   auth.uid() = id OR
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('ADMIN', 'COACH'))
+  public.get_user_role() IN ('ADMIN', 'COACH')
 );
 
 CREATE POLICY "Admin updates users" ON public.users FOR UPDATE USING (
   auth.uid() = id OR
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN')
+  public.get_user_role() = 'ADMIN'
 );
 
 -- ATTENDANCE
 CREATE POLICY "Admin manages attendance" ON public.attendance FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN')
+  public.get_user_role() = 'ADMIN'
 );
 
 CREATE POLICY "Users read own attendance" ON public.attendance FOR SELECT USING (
@@ -131,7 +137,10 @@ CREATE POLICY "Athlete reads own workouts" ON public.workouts FOR SELECT USING (
 
 CREATE POLICY "Athlete updates own workouts" ON public.workouts FOR UPDATE USING (
   athlete_id = auth.uid()
+) WITH CHECK (
+  athlete_id = auth.uid()
 );
+
 
 -- MESSAGES
 CREATE POLICY "Users read own messages" ON public.messages FOR SELECT USING (

@@ -31,6 +31,15 @@ export default function StripeCheckout({ selectedPlan, onClose, onSuccess }) {
 
             <form onSubmit={handlePayment}>
               <input type="email" placeholder="Correo Electrónico" className="input-editorial" required />
+              
+              {selectedPlan.title === 'Clases Elite' && (
+                <select className="input-editorial" style={{marginBottom: '1rem', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer'}} required defaultValue="">
+                  <option value="" disabled>Selecciona tu Horario Preferido</option>
+                  <option value="am" style={{background: 'var(--bg-base)'}}>Turno AM (6:00 - 9:00)</option>
+                  <option value="pm" style={{background: 'var(--bg-base)'}}>Turno PM (16:30 - 18:30)</option>
+                </select>
+              )}
+
               <input type="text" placeholder="Número de Tarjeta" className="input-editorial" required />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <input type="text" placeholder="MM/AA" className="input-editorial" required />

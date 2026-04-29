@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import Landing from './components/Landing';
-import Login from './components/Login';
+import AuthPortal from './components/AuthPortal';
 import SetupAccount from './components/SetupAccount';
 import ClientPortal from './components/ClientPortal';
 import AdminDashboard from './components/AdminDashboard';
 import CoachDashboard from './components/CoachDashboard';
+import Navbar from './components/Navbar';
 import './index.css';
 
 // ============================================
@@ -50,12 +51,21 @@ export default function App() {
 
   const renderView = () => {
     switch (view) {
-      case 'landing': return <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
-      case 'login': return <Login setView={setView} setUser={setUser} />;
+      case 'landing': return <><Navbar setView={setView} /><Landing setView={setView} setSelectedPlan={setSelectedPlan} /></>;
+      case 'login': return <AuthPortal setView={setView} setUser={setUser} initialTab="login" />;
+      case 'register': return <AuthPortal setView={setView} setUser={setUser} initialTab="register" />;
       case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} selectedPlan={selectedPlan} />;
-      case 'client-portal': return user ? <ClientPortal setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
-      case 'admin': return user ? <AdminDashboard setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
-      case 'coach': return <CoachDashboard setView={setView} user={user} />; // Allowing dev access without strict user check for now
+      
+      // Protected Routes con validación de Rol
+      case 'client-portal': 
+        return (user && role) ? <ClientPortal setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
+      
+      case 'admin': 
+        return (user && role === 'ADMIN') ? <AdminDashboard setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
+      
+      case 'coach': 
+        return (user && role === 'COACH') ? <CoachDashboard setView={setView} user={user} /> : <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
+      
       default: return <Landing setView={setView} setSelectedPlan={setSelectedPlan} />;
     }
   };

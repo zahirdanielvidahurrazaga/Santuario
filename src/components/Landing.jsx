@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import StripeCheckout from './StripeCheckout';
+import ScheduleCalendar from './ScheduleCalendar';
 import { CheckCircle2, Dumbbell, CalendarRange, Zap, MapPin } from 'lucide-react';
 
 export default function Landing({ setView, setSelectedPlan }) {
   const [checkoutPlan, setCheckoutPlan] = useState(null);
+  const [showSchedule, setShowSchedule] = useState(false);
 
-  // Intersection Observer for Reveal Animations
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -20,26 +21,19 @@ export default function Landing({ setView, setSelectedPlan }) {
   }, []);
 
   const plans = [
+    { title: "Full Access Elite", price: "$4,000 MXN", features: ["6 clases a la semana", "Acceso a la zona de gimnasio", "Todas las amenidades de elite"], featured: true },
+    { title: "Clases Elite", price: "$3,800 MXN", features: ["6 clases a la semana", "NO incluye Open Gym", "Todas las amenidades de elite"], featured: true },
+    { title: "Plan Personalizado Elite", price: "$16,000 MXN", features: ["Vigencia mensual", "Acceso a todas las amenidades"], featured: false },
+    { title: "Plan Personalizado Lite", price: "$10,000 MXN", features: ["12 sesiones / 3x por semana de 1:30 hr", "Vigencia mensual", "Acceso a todas las amenidades"], featured: false },
     { title: "Kids Elite", price: "$2,500 MXN", features: ["De 6 a 12 años", "4 clases a la semana", "Lunes a Jueves 17:00-18:00"], featured: false },
-    { title: "Clases Elite", price: "$3,800 MXN", features: ["6 clases a la semana", "Acceso a amenidades", "NO incluye Open Gym"], featured: false },
-    { title: "Full Access Elite", price: "$4,000 MXN", features: ["6 clases a la semana", "Open Gym sin límite", "Todas las amenidades Elite", "Ice Bath & Sauna"], featured: true },
-    { title: "Personalizado Lite", price: "$10,000 MXN", features: ["12 sesiones mensuales", "3 veces/semana (1:30hr)", "Todas las amenidades Elite"], featured: false },
-    { title: "Personalizado Elite", price: "$16,000 MXN", features: ["Entrenamiento 1 a 1", "Seguimiento milimétrico", "Todas las amenidades Elite"], featured: true },
-    { title: "Semana de Visitas", price: "$1,500 MXN", features: ["5 visitas", "Open Gym o Clases", "Ice Bath & Sauna"], featured: false },
-    { title: "Visita Básica", price: "$400 MXN", features: ["Sin amenidades", "Open Gym + 1 Clase"], featured: false },
-    { title: "Visita Full", price: "$800 MXN", features: ["Con amenidades", "Open Gym + 1 Clase", "Ice Bath & Sauna"], featured: false },
+    { title: "Programación Online", price: "$2,000 MXN", features: ["Adicional a tu plan actual", "Vigencia mensual", "Sin acceso al gimnasio"], featured: false },
+    { title: "Semana de Visitas", price: "$1,500 MXN", features: ["5 visitas con amenidades", "Open Gym o Clases", "Sauna, Tinas, Regaderas"], featured: false },
+    { title: "Visita Full", price: "$800 MXN", features: ["Visita con amenidades", "Open Gym + 1 Clase", "Sauna, Tinas, Regaderas"], featured: false },
+    { title: "Visita Básica", price: "$400 MXN", features: ["Visita sin amenidades", "Open Gym", "1 Clase"], featured: false },
   ];
 
   return (
     <>
-      <nav className="navbar reveal active">
-        <div className="brand-logo">ELITE <span>BY SANTUARIO</span></div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => setView('login')} style={{background: 'transparent', border: 'none', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.7rem', cursor: 'pointer'}}>Portal Privado</button>
-          <button onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})} style={{background: 'var(--primary)', border: 'none', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.7rem', cursor: 'pointer', fontWeight: '600', display: 'none'}} className="desktop-cta">Únete a Nosotros</button>
-        </div>
-      </nav>
-
       {/* FAB Mobile CTA */}
       <button className="fab-mobile" onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})}>
         Únete a Nosotros
@@ -50,7 +44,36 @@ export default function Landing({ setView, setSelectedPlan }) {
         <div className="hero-gradient"></div>
         <span className="overline reveal active d-1">The Absolute Standard in Calisthenics & Performance</span>
         <h1 className="hero-title reveal active d-2">Build Your <br/><span style={{fontStyle: 'italic', color: 'var(--primary)'}}>Temple.</span></h1>
-        <button className="btn-luxury reveal active d-3" onClick={() => document.getElementById('discover').scrollIntoView({behavior: 'smooth'})} style={{marginTop: '2rem'}}>Descubrir</button>
+        <button className="btn-luxury reveal active d-3" onClick={() => document.getElementById('explore').scrollIntoView({behavior: 'smooth'})} style={{marginTop: '2rem'}}>Descubrir</button>
+      </section>
+
+      {/* QUICK INTERACTIVE NAVIGATION (KOLLECTIVE STYLE) */}
+      <section id="explore" className="section-padding" style={{paddingTop: '4rem', paddingBottom: '4rem'}}>
+        <div className="nav-cards-grid">
+          <div className="nav-card reveal" onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})}>
+            <img src="/community.png" alt="Comunidad Elite" className="nav-card-img" />
+            <div className="nav-card-overlay">
+              <h3 className="nav-card-title">Únete a la Comunidad</h3>
+              <p className="nav-card-desc">Exclusividad y rendimiento</p>
+            </div>
+          </div>
+          
+          <div className="nav-card reveal d-1" onClick={() => setView('register')}>
+            <img src="/app_mockup.png" alt="Santuario Digital" className="nav-card-img" />
+            <div className="nav-card-overlay">
+              <h3 className="nav-card-title">Santuario Digital</h3>
+              <p className="nav-card-desc">Tu progreso 24/7 en el bolsillo</p>
+            </div>
+          </div>
+
+          <div className="nav-card reveal d-2" onClick={() => document.getElementById('discover').scrollIntoView({behavior: 'smooth'})}>
+            <img src="/coaching.png" alt="Metodología" className="nav-card-img" />
+            <div className="nav-card-overlay">
+              <h3 className="nav-card-title">Metodología Élite</h3>
+              <p className="nav-card-desc">Sistemas de entrenamiento probados</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="discover" className="section-padding">
@@ -62,7 +85,13 @@ export default function Landing({ setView, setSelectedPlan }) {
               No somos un gimnasio comercial. Somos una obra de arte funcional. Instalaciones de alto rendimiento diseñadas meticulosamente para forjar élites mediante fuerza estructural y recuperación térmica extrema. Domina tu peso corporal y construye fuerza real.
             </p>
           </div>
-          <img src="/training.png" alt="Training" className="editorial-image reveal d-1" />
+          <div className="nav-card reveal d-1" style={{height: '70vh', minHeight: 'unset'}} onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})}>
+            <img src="/calisthenics_workout.png" alt="Fuerza Estructural" className="nav-card-img" />
+            <div className="nav-card-overlay">
+               <h3 className="nav-card-title" style={{fontSize: '2rem'}}>Fuerza Estructural</h3>
+               <p className="nav-card-desc">Biomecánica avanzada</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -80,11 +109,17 @@ export default function Landing({ setView, setSelectedPlan }) {
               <p style={{fontFamily: 'Montserrat', fontWeight: '300', color: 'var(--text-muted)'}}>Elimina toxinas, mejora la circulación sanguínea y cardiovascular, y alivia dolores articulares.</p>
             </div>
           </div>
-          <img src="/recovery.png" alt="Recovery" className="editorial-image reveal d-1" />
+          <div className="nav-card reveal d-1" style={{height: '70vh', minHeight: 'unset'}} onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})}>
+            <img src="/ice_bath.png" alt="Recuperación Extrema" className="nav-card-img" />
+            <div className="nav-card-overlay">
+               <h3 className="nav-card-title" style={{fontSize: '2rem'}}>Recuperación Extrema</h3>
+               <p className="nav-card-desc">Domina la regeneración celular</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="section-padding">
+      <section id="schedule" className="section-padding">
         <div className="text-center reveal">
           <span className="overline">The Routine</span>
           <h2 style={{fontSize: '3rem'}}>Programación & Horarios.</h2>
@@ -98,23 +133,24 @@ export default function Landing({ setView, setSelectedPlan }) {
           >
             <Dumbbell size={28} style={{color:'var(--primary)', marginBottom:'1.2rem'}} />
             <h3 style={{fontSize:'1.3rem', marginBottom:'1.5rem'}}>Programación Semanal</h3>
-            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2'}}>
+            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2', flex: 1}}>
               <p>Lunes: <span style={{color:'var(--text-main)', fontWeight:'400'}}>PULL</span></p>
               <p>Martes: <span style={{color:'var(--text-main)', fontWeight:'400'}}>PIERNA</span></p>
               <p>Miércoles: <span style={{color:'var(--text-main)', fontWeight:'400'}}>PUSH</span></p>
               <p>Jueves: <span style={{color:'var(--text-main)', fontWeight:'400'}}>PIERNA</span></p>
               <p>Viernes: <span style={{color:'var(--text-main)', fontWeight:'400'}}>PULL/PUSH</span></p>
             </div>
+            <button className="btn-luxury" style={{width: '100%', padding: '0.8rem', marginTop: '1.5rem'}} onClick={() => setShowSchedule(true)}>Ver Horarios</button>
           </div>
 
           {/* Card 2: Clases Grupales */}
-          <div style={{background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:'16px', padding:'2rem', textAlign:'center', transition:'all 0.4s'}}
+          <div style={{background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:'16px', padding:'2rem', textAlign:'center', transition:'all 0.4s', display: 'flex', flexDirection: 'column'}}
             onMouseOver={e => {e.currentTarget.style.borderColor='rgba(255,255,255,0.15)'; e.currentTarget.style.transform='translateY(-4px)';}}
             onMouseOut={e => {e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'; e.currentTarget.style.transform='translateY(0)';}}
           >
-            <CalendarRange size={28} style={{color:'var(--primary)', marginBottom:'1.2rem'}} />
+            <CalendarRange size={28} style={{color:'var(--primary)', marginBottom:'1.2rem', margin: '0 auto'}} />
             <h3 style={{fontSize:'1.3rem', marginBottom:'1.5rem'}}>Clases Grupales</h3>
-            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2'}}>
+            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2', flex: 1}}>
               <p><span style={{color:'var(--text-main)', fontWeight:'400'}}>LUN - VIE (AM)</span></p>
               <p>6:00 · 7:30 · 9:00</p>
               <p><span style={{color:'var(--text-main)', fontWeight:'400'}}>LUN - VIE (PM)</span></p>
@@ -123,16 +159,17 @@ export default function Landing({ setView, setSelectedPlan }) {
               <p>8:00 (Grupal) · 8:30 (Elder)</p>
               <p style={{fontSize:'0.75rem', color:'var(--primary)', marginTop:'0.5rem'}}>*Viernes no hay clases PM</p>
             </div>
+            <button className="btn-luxury" style={{width: '100%', padding: '0.8rem', marginTop: '1.5rem'}} onClick={() => setShowSchedule(true)}>Agendar Clase</button>
           </div>
 
           {/* Card 3: Open Gym */}
-          <div style={{background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:'16px', padding:'2rem', textAlign:'center', transition:'all 0.4s'}}
+          <div style={{background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:'16px', padding:'2rem', textAlign:'center', transition:'all 0.4s', display: 'flex', flexDirection: 'column'}}
             onMouseOver={e => {e.currentTarget.style.borderColor='rgba(255,255,255,0.15)'; e.currentTarget.style.transform='translateY(-4px)';}}
             onMouseOut={e => {e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'; e.currentTarget.style.transform='translateY(0)';}}
           >
-            <Zap size={28} style={{color:'var(--primary)', marginBottom:'1.2rem'}} />
+            <Zap size={28} style={{color:'var(--primary)', marginBottom:'1.2rem', margin: '0 auto'}} />
             <h3 style={{fontSize:'1.3rem', marginBottom:'1.5rem'}}>Open Gym (Máquinas)</h3>
-            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2'}}>
+            <div style={{fontFamily:'Montserrat', fontSize:'0.9rem', color:'var(--text-muted)', lineHeight:'2.2', flex: 1}}>
               <p>Lunes - Viernes</p>
               <p style={{color:'var(--text-main)', fontWeight:'400', fontSize:'1.5rem', fontFamily:'Playfair Display'}}>6:00 — 21:00</p>
               <p style={{marginTop:'0.5rem'}}>Sábado</p>
@@ -140,6 +177,7 @@ export default function Landing({ setView, setSelectedPlan }) {
               <p style={{marginTop:'0.5rem'}}>Domingo</p>
               <p style={{color:'var(--primary)', fontWeight:'600', fontSize:'1rem'}}>Cerrado</p>
             </div>
+            <button className="btn-luxury" style={{width: '100%', padding: '0.8rem', marginTop: '1.5rem'}} onClick={() => setCheckoutPlan(plans.find(p => p.title === 'Full Access Elite'))}>Reservar Acceso</button>
           </div>
         </div>
       </section>
@@ -180,9 +218,11 @@ export default function Landing({ setView, setSelectedPlan }) {
         </p>
       </footer>
 
-      {checkoutPlan && (
-        <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setSelectedPlan(checkoutPlan); setCheckoutPlan(null); setView('setup-account'); }} />
-      )}
+      {checkoutPlan && <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setSelectedPlan(checkoutPlan); setCheckoutPlan(null); setView('setup-account'); }} />}
+      {showSchedule && <ScheduleCalendar onClose={() => setShowSchedule(false)} onSelectClass={(cls) => {
+        setShowSchedule(false);
+        setCheckoutPlan(plans.find(p => p.title === 'Clases Elite'));
+      }} />}
     </>
   );
 }
