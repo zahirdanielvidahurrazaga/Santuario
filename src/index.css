@@ -80,8 +80,8 @@ h1, h2, h3, .serif {
 
 /* REVEAL ANIMATIONS ON SCROLL */
 .reveal {
-  opacity: 1; /* Forzado para diagnóstico */
-  transform: translateY(0);
+  opacity: 0;
+  transform: translateY(40px);
   transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal.active {
