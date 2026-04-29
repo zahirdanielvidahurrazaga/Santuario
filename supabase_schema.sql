@@ -161,3 +161,53 @@ CREATE INDEX IF NOT EXISTS idx_workouts_coach ON public.workouts(coach_id);
 CREATE INDEX IF NOT EXISTS idx_messages_participants ON public.messages(sender_id, receiver_id);
 CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 CREATE INDEX IF NOT EXISTS idx_users_assigned_coach ON public.users(assigned_coach);
+
+-- =====================
+-- 8. TABLA: classes (Horarios)
+-- =====================
+CREATE TABLE IF NOT EXISTS public.classes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  day_of_week TEXT NOT NULL, -- 'Lunes', 'Martes', etc.
+  start_time TIME NOT NULL,
+  duration_min INTEGER DEFAULT 60,
+  class_type TEXT NOT NULL, -- 'CALISTHENICS', 'FULL BODY', etc.
+  class_name TEXT NOT NULL, -- 'ENDURANCE', etc.
+  coach_id UUID REFERENCES public.users(id),
+  capacity INTEGER DEFAULT 15,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =====================
+-- 9. TABLA: reservations (Reservas)
+-- =====================
+CREATE TABLE IF NOT EXISTS public.reservations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
+  reservation_date DATE NOT NULL,
+  status TEXT DEFAULT 'CONFIRMED' CHECK (status IN ('CONFIRMED', 'CANCELLED', 'WAITLIST')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =====================
+-- 10. RLS ADICIONAL
+-- =====================
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can read classes" ON public.classes;
+DROP POLICY IF EXISTS "Admin manages classes" ON public.classes;
+CREATE POLICY "Anyone can read classes" ON public.classes FOR SELECT USING (true);
+CREATE POLICY "Admin manages classes" ON public.classes FOR ALL USING (public.get_user_role() = 'ADMIN');
+
+DROP POLICY IF EXISTS "Users read own reservations" ON public.reservations;
+DROP POLICY IF EXISTS "Users create reservations" ON public.reservations;
+DROP POLICY IF EXISTS "Users delete own reservations" ON public.reservations;
+CREATE POLICY "Users read own reservations" ON public.reservations FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users create reservations" ON public.reservations FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users delete own reservations" ON public.reservations FOR DELETE USING (user_id = auth.uid());
+
+-- ÍNDICES ADICIONALES
+CREATE INDEX IF NOT EXISTS idx_classes_day ON public.classes(day_of_week);
+CREATE INDEX IF NOT EXISTS idx_reservations_user_date ON public.reservations(user_id, reservation_date);
+CREATE INDEX IF NOT EXISTS idx_reservations_class ON public.reservations(class_id);
