@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import StripeCheckout from './StripeCheckout';
 import ScheduleCalendar from './ScheduleCalendar';
 import { CheckCircle2, Dumbbell, CalendarRange, Zap, MapPin } from 'lucide-react';
 
-export default function Landing({ setView, setSelectedPlan }) {
+export default function Landing({ setView, setSelectedPlan, user }) {
   const [checkoutPlan, setCheckoutPlan] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleSummary, setScheduleSummary] = useState(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -218,10 +220,33 @@ export default function Landing({ setView, setSelectedPlan }) {
         </p>
       </footer>
 
-      {checkoutPlan && <StripeCheckout selectedPlan={checkoutPlan} onClose={() => setCheckoutPlan(null)} onSuccess={() => { setSelectedPlan(checkoutPlan); setCheckoutPlan(null); setView('setup-account'); }} />}
-      {showSchedule && <ScheduleCalendar onClose={() => setShowSchedule(false)} onSelectClass={(cls) => {
+      {checkoutPlan && <StripeCheckout selectedPlan={checkoutPlan} user={user} scheduleSummary={scheduleSummary} onClose={() => { setCheckoutPlan(null); setScheduleSummary(null); }} onSuccess={async () => {
+        if (user) {
+          const expiry = new Date();
+          expiry.setMonth(expiry.getMonth() + 1);
+          await supabase.from('users').update({
+            membership_plan: checkoutPlan.title,
+            membership_status: 'ACTIVE',
+            membership_expiry: expiry.toISOString().split('T')[0]
+          }).eq('id', user.id);
+          setCheckoutPlan(null);
+          setScheduleSummary(null);
+          setView('client-portal');
+        } else {
+          setSelectedPlan(checkoutPlan);
+          setCheckoutPlan(null);
+          setScheduleSummary(null);
+          setView('register');
+        }
+      }} />}
+      {showSchedule && <ScheduleCalendar onClose={() => setShowSchedule(false)} onSelectClass={(data) => {
         setShowSchedule(false);
-        setCheckoutPlan(plans.find(p => p.title === 'Clases Elite'));
+        const planKey = data.planKey || 'Clases Elite';
+        const plan = plans.find(p => p.title === planKey);
+        if (plan) {
+          setScheduleSummary(data.selectedClasses || []);
+          setCheckoutPlan(plan);
+        }
       }} />}
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import Landing from './components/Landing';
 import AuthPortal from './components/AuthPortal';
@@ -17,6 +17,10 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const viewRef = useRef(view);
+
+  // Keep ref in sync with state
+  useEffect(() => { viewRef.current = view; }, [view]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,7 +33,10 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
-        fetchRole(session.user.id);
+        // Don't auto-redirect if user is on the register screen (let them see the success message)
+        if (viewRef.current !== 'register') {
+          fetchRole(session.user.id);
+        }
       } else {
         setUser(null);
         setRole(null);
@@ -41,27 +48,20 @@ export default function App() {
   }, []);
 
   const fetchRole = async (userId) => {
-    console.log("Buscando rol para ID:", userId);
-    const { data, error } = await supabase.from('users').select('role').eq('id', userId).single();
-    
-    if (error) {
-      console.error("Error obteniendo rol:", error);
-    }
-    
+    const { data } = await supabase.from('users').select('role, membership_status').eq('id', userId).single();
     const userRole = data?.role || 'CLIENT';
-    console.log("Rol obtenido:", userRole);
-    
     setRole(userRole);
     if (userRole === 'ADMIN') setView('admin');
     else if (userRole === 'COACH') setView('coach');
-    else setView('client-portal');
+    else if (data?.membership_status === 'ACTIVE') setView('client-portal');
+    else setView('landing'); // No active membership → landing page
   };
 
   const renderView = () => {
     switch (view) {
-      case 'landing': return <><Navbar setView={setView} /><Landing setView={setView} setSelectedPlan={setSelectedPlan} /></>;
+      case 'landing': return <><Navbar setView={setView} user={user} /><Landing setView={setView} setSelectedPlan={setSelectedPlan} user={user} /></>;
       case 'login': return <AuthPortal setView={setView} setUser={setUser} initialTab="login" />;
-      case 'register': return <AuthPortal setView={setView} setUser={setUser} initialTab="register" />;
+      case 'register': return <AuthPortal setView={setView} setUser={setUser} initialTab="register" selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} />;
       case 'setup-account': return <SetupAccount setView={setView} setUser={setUser} selectedPlan={selectedPlan} />;
       
       // Protected Routes con validación de Rol

@@ -61,7 +61,21 @@ export default function ClientPortal({ setView, user }) {
     };
     fetchWorkout();
 
-    // Poll occupancy every 30 seconds
+    // Realtime subscription for instant occupancy updates
+    const channel = supabase
+      .channel('attendance-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, async () => {
+        const today = new Date().toISOString().split('T')[0];
+        const { count } = await supabase
+          .from('attendance')
+          .select('*', { count: 'exact', head: true })
+          .gte('checked_in_at', today)
+          .is('checked_out_at', null);
+        setOccupancy(count || 0);
+      })
+      .subscribe();
+
+    // Polling fallback every 30 seconds
     const interval = setInterval(async () => {
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase
@@ -72,7 +86,10 @@ export default function ClientPortal({ setView, user }) {
       setOccupancy(count || 0);
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const schedule = [
